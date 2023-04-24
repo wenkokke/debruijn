@@ -8,6 +8,7 @@ on:
     types:
       - opened
       - synchronize
+      - reopened
   merge_group:
 
 jobs:
@@ -20,6 +21,8 @@ jobs:
         haskell:
           - ghc: { version: "9.6.1" }
             cabal: { version: "3.10.1.0" }
+
+    name: ${{ matrix.os.name }} / ${{ matrix.haskell.ghc.version }}
 
     runs-on: ${{ matrix.os.type }}
 
