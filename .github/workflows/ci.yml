@@ -18,11 +18,15 @@ jobs:
         os:
           - name: "Linux"
             type: "ubuntu-latest"
+          - name: "macOS"
+            type: "macos-latest"
+          - name: "Windows"
+            type: "windows-latest"
         haskell:
           - ghc: { version: "9.6.1" }
             cabal: { version: "3.10.1.0" }
 
-    name: ${{ matrix.os.name }} / ${{ matrix.haskell.ghc.version }}
+    name: ${{ matrix.os.name }} / GHC ${{ matrix.haskell.ghc.version }}
 
     runs-on: ${{ matrix.os.type }}
 
