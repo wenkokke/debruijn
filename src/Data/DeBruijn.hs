@@ -4,14 +4,14 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Data.DeBruijn
   ( DB (Z, S),
@@ -27,9 +27,9 @@ where
 
 import GHC.Num.Natural (Natural, naturalIsZero, naturalSubUnsafe, naturalZero)
 import GHC.TypeNats (SNat, fromSNat, withSomeSNat, type (+))
-import Test.QuickCheck.Modifiers (Positive (..), NonNegative (..))
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
 import Test.QuickCheck.Gen (Gen, elements)
+import Test.QuickCheck.Modifiers (NonNegative (..), Positive (..))
 
 -- | The type of DeBruijn indices.
 newtype DB (n :: Natural) = UnsafeDB Natural
@@ -64,7 +64,7 @@ instance Show (DB n) where
   show (UnsafeDB index) = '#' : show index
 
 -- | An existential wrapper for DeBruijn indices.
-data SomeDB = forall n. SomeDB { dbBound :: SNat n, dbIndex :: DB n }
+data SomeDB = forall n. SomeDB {dbBound :: SNat n, dbIndex :: DB n}
 
 instance Show SomeDB where
   show :: SomeDB -> String
