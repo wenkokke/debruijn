@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  merge_group:
+
+jobs:
+  CI:
+    strategy:
+      matrix:
+        os:
+          - name: "Linux"
+            type: "ubuntu-latest"
+        haskell:
+          - ghc: { version: "9.6.1" }
+            cabal: { version: "3.10.1.0" }
+
+    runs-on: ${{ matrix.os.type }}
+
+    steps:
+      - name: Get source
+        uses: actions/checkout@v3
+
+      - name: Check formatting
+        uses: mrkkrp/ormolu-action@v11
+
+      - id: setup-haskell
+        name: Setup Haskell
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.haskell.ghc.version }}
+          cabal-version: ${{ matrix.haskell.cabal.version }}
+
+      - id: cache-haskell
+        name: Cache ~/.cabal/store and dist-newstyle
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ steps.setup-haskell.outputs.cabal-store }}
+            dist-newstyle
+          key: |
+            haskell-cache-${{ runner.arch }}-${{ runner.os }}-ghc-${{ matrix.haskell.ghc.version }}
+
+      - name: Run tests
+        run: cabal v2-test all --test-show-detail=always
+        shell: sh
