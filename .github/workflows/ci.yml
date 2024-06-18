@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check formatting
-        uses: mrkkrp/ormolu-action@v15
+        uses: mrkkrp/ormolu-action@v16
 
       - id: setup-haskell
         name: Setup Haskell
