@@ -1,11 +1,27 @@
-{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE CApiFFI #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 
 module README where
 
 import Data.Kind (Type)
+import Data.Word (Word64)
+import Text.Printf (printf)
+
+newtype BitVec = BitVec {unBitVec :: Word64}
+  deriving (Num)
+
+instance Show BitVec where
+  show :: BitVec -> String
+  show = printf "0b%b" . (.unBitVec)
+
+foreign import capi unsafe "pdep.c pdep"
+  pdep :: BitVec -> BitVec -> BitVec
+
+foreign import capi unsafe "pext.c pext"
+  pext :: BitVec -> BitVec -> BitVec
 
 --------------------------------------------------------------------------------
 -- Inductive Natural Numbers
@@ -19,41 +35,30 @@ plus :: Nat -> Nat -> Nat
 Z   `plus` m = m
 S n `plus` m = S (n `plus` m)
 {+-}
-
-
-
-
-
-
-
-
-
-
-
-
 --------------------------------------------------------------------------------
 -- Efficient Natural Number Representation
 --------------------------------------------------------------------------------
-
+{--}
 type NatRep = Word
 
 mkZRep :: NatRep -- Z
 mkZRep = 0
 
 mkSRep :: NatRep -> NatRep -- S
-mkSRep = succ
+mkSRep = (+ 1)
 
 unSRep :: NatRep -> NatRep
-unSRep = pred
+unSRep = subtract 1
 
 elNatRep :: a -> (NatRep -> a) -> NatRep -> a
 elNatRep ifZ ifS r =
   if r == mkZRep then ifZ else ifS (unSRep r)
 
+{--}
 --------------------------------------------------------------------------------
 -- Efficient Natural Numbers
 --------------------------------------------------------------------------------
-
+{--}
 newtype Nat = UnsafeNat {natRep :: NatRep}
 
 mkZ :: Nat
@@ -87,3 +92,5 @@ pattern S :: () => () => Nat -> Nat
 pattern S n <- (projectNat -> SF n) where S n = embedNat (SF n)
 
 {-# COMPLETE Z, S #-}
+
+{--}
