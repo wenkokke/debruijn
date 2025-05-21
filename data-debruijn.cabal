@@ -37,7 +37,7 @@ library
     Data.Type.Nat.Singleton
 
   build-depends:
-    , base                     >=4.18 && <5
+    , base                  >=4.18 && <5
     , data-debruijn:unsafe
 
 library unsafe
@@ -108,7 +108,7 @@ library extras
     , data-debruijn:arbitrary
     , data-debruijn:inductive
     , deepseq                  ^>=1.5
-    , QuickCheck
+    , QuickCheck               >=2.9  && <3.0
 
 test-suite data-debruijn-test
   import:         language
