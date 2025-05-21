@@ -18,16 +18,54 @@ module Data.DeBruijn.Environment.Unsafe (
 
 import Data.DeBruijn.Index.Unsafe (Ix (ixRep))
 import Data.Kind (Type)
-import Data.Maybe (fromMaybe)
-import Data.Sequence (Seq (..))
-import Data.Sequence qualified as Seq
 import Data.Type.Nat (Nat (..), Pos, Pred)
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude hiding (lookup)
 
 --------------------------------------------------------------------------------
+-- Conditional Imports
+--------------------------------------------------------------------------------
+
+#ifdef SKEW_LIST
+
+import Data.SkewList.Strict (SkewList)
+import Data.SkewList.Strict qualified as SkewList
+
+#else
+
+import Data.Sequence (Seq)
+import Data.Sequence qualified as Seq
+import Data.Maybe (fromJust)
+
+#endif
+
+--------------------------------------------------------------------------------
 -- Environment Representation
 --------------------------------------------------------------------------------
+#ifdef SKEW_LIST
+
+type EnvRep = SkewList
+
+mkNilRep :: EnvRep a
+mkNilRep = SkewList.Nil
+{-# INLINE mkNilRep #-}
+
+mkSnocRep :: EnvRep a -> a -> EnvRep a
+mkSnocRep xs x = SkewList.Cons x xs
+{-# INLINE mkSnocRep #-}
+
+elEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
+elEnvRep ifNil ifSnoc = \case
+  SkewList.Nil -> ifNil
+  SkewList.Cons x xs -> ifSnoc xs x
+{-# INLINE elEnvRep #-}
+
+lookupRep :: Int -> EnvRep a -> a
+lookupRep = flip (SkewList.!)
+{-# INLINE lookupRep #-}
+{-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
+
+#else
 
 type EnvRep = Seq
 
@@ -40,11 +78,17 @@ mkSnocRep xs x = xs Seq.:|> x
 {-# INLINE mkSnocRep #-}
 
 elEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
-elEnvRep ifNil ifSnoc r = case Seq.viewr r of
-  Seq.EmptyR -> ifNil
-  xs Seq.:> x -> ifSnoc xs x
+elEnvRep ifNil ifSnoc = \case
+  Seq.Empty -> ifNil
+  xs Seq.:|> x -> ifSnoc xs x
 {-# INLINE elEnvRep #-}
 
+lookupRep :: Int -> EnvRep a -> a
+lookupRep = (fromJust .) . Seq.lookup
+{-# INLINE lookupRep #-}
+{-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
+
+#endif
 --------------------------------------------------------------------------------
 -- Environments
 --------------------------------------------------------------------------------
@@ -92,6 +136,4 @@ pattern (:>) xs x <- (projectEnv -> SnocF xs x) where (:>) xs x = embedEnv (Snoc
 {-# COMPLETE Nil, (:>) #-}
 
 lookup :: Ix n -> Env n a -> a
-lookup i xs = fromMaybe err (Seq.lookup i.ixRep xs.envRep)
- where
-  err = error "Oh, how the illusion of safety is shattered!"
+lookup i xs = lookupRep i.ixRep xs.envRep
