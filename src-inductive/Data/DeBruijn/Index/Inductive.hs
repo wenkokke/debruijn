@@ -80,7 +80,7 @@ fromInductive (FS i) = Unsafe.FS (fromInductive i)
 fromIx :: (Integral i) => Ix n -> i
 fromIx = \case
   FZ -> 0
-  FS i -> succ (fromIx i)
+  FS i -> 1 + fromIx i
 
 fromIxRaw :: Ix n -> Int
 fromIxRaw = fromIx

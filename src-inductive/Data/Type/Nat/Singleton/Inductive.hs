@@ -10,6 +10,7 @@ module Data.Type.Nat.Singleton.Inductive (
   fromInductive,
   fromSNat,
   fromSNatRaw,
+  plus,
   decSNat,
 
   -- * Existential Wrapper
@@ -80,11 +81,16 @@ instance Show (SNat n) where
 {-# SPECIALIZE fromSNat :: SNat n -> Int #-}
 fromSNat :: (Integral i) => SNat n -> i
 fromSNat Z = 0
-fromSNat (S n') = succ (fromSNat n')
+fromSNat (S n') = 1 + fromSNat n'
 
 fromSNatRaw :: SNat n -> Int
 fromSNatRaw = fromSNat
 {-# INLINE fromSNatRaw #-}
+
+-- | Addition for natural number singletons.
+plus :: SNat n -> SNat m -> SNat (n + m)
+Z `plus` m = m
+S n `plus` m = S (n `plus` m)
 
 -- | Decidable equality for natural number singletons.
 decSNat :: SNat m -> SNat n -> Maybe (m :~: n)

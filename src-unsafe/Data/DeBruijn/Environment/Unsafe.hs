@@ -44,6 +44,9 @@ import Data.Maybe (fromJust)
 --------------------------------------------------------------------------------
 #ifdef SKEW_LIST
 
+--------------------------------------------------------------------------------
+-- Environment Representation: Skew List
+
 type EnvRep = SkewList
 
 mkNilRep :: EnvRep a
@@ -66,6 +69,9 @@ lookupRep = flip (SkewList.!)
 {-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
 
 #else
+
+--------------------------------------------------------------------------------
+-- Environment Representation: Finger Tree
 
 type EnvRep = Seq
 

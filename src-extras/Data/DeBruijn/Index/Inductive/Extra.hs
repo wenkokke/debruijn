@@ -24,7 +24,7 @@ data SomeThinArgs
 
 toSomeThinArgsRaw :: (HasCallStack) => (Int, Int, Int) -> SomeThinArgs
 toSomeThinArgsRaw (bound, index1, index2) =
-  case toSomeIxRaw (succ bound, index1) of
+  case toSomeIxRaw (1 + bound, index1) of
     SomeIx{bound = sn, index = i} ->
       case toSomeIxRaw (bound, index2) of
         SomeIx{bound = n, index = j} ->

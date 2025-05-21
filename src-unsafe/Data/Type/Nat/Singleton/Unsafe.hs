@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RoleAnnotations #-}
@@ -34,7 +35,7 @@ module Data.Type.Nat.Singleton.Unsafe (
   withInstance,
 
   -- * Unsafe
-  SNat (UnsafeSNat, sNatRep),
+  SNat (UnsafeSNat, snatRep),
 ) where
 
 import Control.DeepSeq (NFData (..))
@@ -58,30 +59,26 @@ import Unsafe.Coerce (unsafeCoerce)
 #define SNatRep Int
 
 isValidSNatRep :: SNatRep -> Bool
-isValidSNatRep u = u >= 0
+isValidSNatRep = (>= 0)
 
 mkZRep :: SNatRep
 mkZRep = 0
 {-# INLINE mkZRep #-}
 
 mkSRep :: SNatRep -> SNatRep
-mkSRep u =
-  assert (isValidSNatRep u) $
-    succ u
+mkSRep = (1 +)
 {-# INLINE mkSRep #-}
 
-getSNatRepChild :: SNatRep -> SNatRep
-getSNatRepChild u =
-  assert (isValidSNatRep u && u /= mkZRep) $
-    pred u
-{-# INLINE getSNatRepChild #-}
+unSRep :: SNatRep -> SNatRep
+unSRep = subtract 1
+{-# INLINE unSRep #-}
 
-elSNatRep :: SNatRep -> a -> (SNatRep -> a) -> a
-elSNatRep u ifZ ifS =
-  assert (isValidSNatRep u) $
-    if u == mkZRep
+elSNatRep :: a -> (SNatRep -> a) -> SNatRep -> a
+elSNatRep ifZ ifS n =
+  assert (isValidSNatRep n) $
+    if n == mkZRep
       then ifZ
-      else ifS (getSNatRepChild u)
+      else ifS (unSRep n)
 {-# INLINE elSNatRep #-}
 
 --------------------------------------------------------------------------------
@@ -90,11 +87,11 @@ elSNatRep u ifZ ifS =
 
 -- | @'SNat' n@ is the singleton type for natural numbers.
 type SNat :: Nat -> Type
-newtype SNat n = UnsafeSNat {sNatRep :: SNatRep}
+newtype SNat n = UnsafeSNat {snatRep :: SNatRep}
 
 instance NFData (SNat n) where
   rnf :: SNat n -> ()
-  rnf (UnsafeSNat u) = rnf u
+  rnf (UnsafeSNat n) = rnf n
 
 type role SNat nominal
 
@@ -103,16 +100,16 @@ mkZ = UnsafeSNat mkZRep
 {-# INLINE mkZ #-}
 
 mkS :: SNat n -> SNat (S n)
-mkS = UnsafeSNat . mkSRep . sNatRep
+mkS = UnsafeSNat . mkSRep . (.snatRep)
 {-# INLINE mkS #-}
 
 -- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
 fromSNat :: (Integral i) => SNat n -> i
-fromSNat (UnsafeSNat u) = fromInteger (toInteger u)
+fromSNat = fromInteger . toInteger . (.snatRep)
 
 -- | @'fromSNatRaw' n@ returns the raw underlying representation of 'SNat n'.
-fromSNatRaw :: SNat n -> Int
-fromSNatRaw (UnsafeSNat w) = w
+fromSNatRaw :: SNat n -> SNatRep
+fromSNatRaw = (.snatRep)
 
 instance Show (SNat n) where
   showsPrec :: Int -> SNat n -> ShowS
@@ -127,7 +124,8 @@ data SNatF (snat :: Nat -> Type) (n :: Nat) where
   SF :: !(snat n) -> SNatF snat (S n)
 
 projectSNat :: SNat n -> SNatF SNat n
-projectSNat (UnsafeSNat u) = elSNatRep u (unsafeCoerce ZF) (unsafeCoerce . SF . UnsafeSNat)
+projectSNat =
+  elSNatRep (unsafeCoerce ZF) (unsafeCoerce . SF . UnsafeSNat) . (.snatRep)
 {-# INLINE projectSNat #-}
 
 embedSNat :: SNatF SNat n -> SNat n
@@ -147,9 +145,9 @@ pattern S n <- (projectSNat -> SF n) where S n = embedSNat (SF n)
 {-# COMPLETE Z, S #-}
 
 -- | Decidable equality for natural number singletons.
-decSNat :: SNat m -> SNat n -> Maybe (m :~: n)
-decSNat (UnsafeSNat u1) (UnsafeSNat u2) =
-  if u1 == u2
+decSNat :: SNat n -> SNat m -> Maybe (n :~: m)
+decSNat n m =
+  if n.snatRep == m.snatRep
     then Just (unsafeCoerce Refl)
     else Nothing
 
@@ -184,26 +182,26 @@ withSomeSNat action (SomeSNat n) = action n
 prop> toSomeSNat (fromSomeSNat n) == n
 -}
 toSomeSNat :: (Integral i) => i -> SomeSNat
-toSomeSNat u
-  | u < 0 = error $ printf "cannot convert %d to natural number singleton" (toInteger u)
-  | otherwise = SomeSNat (UnsafeSNat (fromIntegral u))
+toSomeSNat r
+  | r < 0 = error $ printf "cannot convert %d to natural number singleton" (toInteger r)
+  | otherwise = SomeSNat (UnsafeSNat (fromIntegral r))
 
 {-| @'toSomeSNat' n@ constructs the singleton @'SNat' n@.
 
 prop> toSomeSNatRaw (fromSomeSNatRaw n) == n
 -}
-toSomeSNatRaw :: Int -> SomeSNat
-toSomeSNatRaw u
-  | u < 0 = error $ printf "cannot convert %d to natural number singleton"
-  | otherwise = SomeSNat (UnsafeSNat u)
+toSomeSNatRaw :: SNatRep -> SomeSNat
+toSomeSNatRaw r
+  | r < 0 = error $ printf "cannot convert %d to natural number singleton"
+  | otherwise = SomeSNat (UnsafeSNat r)
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped singleton.
 fromSomeSNat :: (Integral i) => SomeSNat -> i
 fromSomeSNat = withSomeSNat fromSNat
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped singleton.
-fromSomeSNatRaw :: SomeSNat -> Int
-fromSomeSNatRaw (SomeSNat (UnsafeSNat u)) = u
+fromSomeSNatRaw :: SomeSNat -> SNatRep
+fromSomeSNatRaw (SomeSNat (UnsafeSNat r)) = r
 
 --------------------------------------------------------------------------------
 -- Laws

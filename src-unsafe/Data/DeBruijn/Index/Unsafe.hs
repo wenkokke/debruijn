@@ -5,7 +5,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
@@ -35,7 +34,6 @@ module Data.DeBruijn.Index.Unsafe (
 ) where
 
 import Control.DeepSeq (NFData (..))
-import Control.Exception (assert)
 import Data.Bifunctor (Bifunctor (..))
 import Data.Kind (Type)
 import Data.Proxy (Proxy)
@@ -60,27 +58,26 @@ mkFZRep = 0
 {-# INLINE mkFZRep #-}
 
 mkFSRep :: IxRep -> IxRep
-mkFSRep = succ
+mkFSRep = (1 +)
 {-# INLINE mkFSRep #-}
 
 unFSRep :: IxRep -> IxRep
-unFSRep r =
-  assert (r /= mkFZRep) $
-    pred r
+unFSRep = subtract 1
 {-# INLINE unFSRep #-}
 
 elIxRep :: a -> (IxRep -> a) -> IxRep -> a
-elIxRep ifZ ifS r = if r == mkFZRep then ifZ else ifS (unFSRep r)
+elIxRep ifZ ifS i =
+  if i == mkFZRep then ifZ else ifS (unFSRep i)
 {-# INLINE elIxRep #-}
 
 thinRep :: IxRep -> IxRep -> IxRep
 thinRep i j
-  | i <= j = succ j
+  | i <= j = mkFSRep j
   | otherwise = j
 
 thickRep :: IxRep -> IxRep -> Maybe IxRep
 thickRep i j = case i `compare` j of
-  LT -> Just (pred j)
+  LT -> Just (unFSRep j)
   EQ -> Nothing
   GT -> Just j
 
@@ -130,7 +127,7 @@ fromIx = fromInteger . toInteger . (.ixRep)
 {-# INLINE fromIx #-}
 
 -- | @'fromIxRaw' n@ returns the raw numeric representation of 'SNat n'.
-fromIxRaw :: Ix n -> Int
+fromIxRaw :: Ix n -> IxRep
 fromIxRaw = (.ixRep)
 {-# INLINE fromIxRaw #-}
 
@@ -170,19 +167,19 @@ isPos (FS _) r = r
 
 -- | Thinning.
 thin :: Ix (S n) -> Ix n -> Ix (S n)
-thin (UnsafeIx i) (UnsafeIx j) = UnsafeIx (thinRep i j)
+thin i j = UnsafeIx (thinRep i.ixRep j.ixRep)
 
 -- | Thickening.
 thick :: Ix (S n) -> Ix (S n) -> Maybe (Ix n)
-thick (UnsafeIx i) (UnsafeIx j) = UnsafeIx <$> thickRep i j
+thick i j = UnsafeIx <$> thickRep i.ixRep j.ixRep
 
 -- | Inject.
 inject :: Proxy n -> Ix m -> Ix (n + m)
-inject _ (UnsafeIx j) = UnsafeIx j
+inject _ j = UnsafeIx j.ixRep
 
 -- | Raise.
 raise :: SNat n -> Ix m -> Ix (n + m)
-raise (UnsafeSNat n) (UnsafeIx j) = UnsafeIx (n + j)
+raise n j = UnsafeIx (n.snatRep + j.ixRep)
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -197,7 +194,7 @@ data SomeIx = forall (n :: Nat). SomeIx
 
 instance NFData SomeIx where
   rnf :: SomeIx -> ()
-  rnf SomeIx{..} = rnf bound `seq` rnf index
+  rnf (SomeIx n i) = rnf n `seq` rnf i
 
 instance Eq SomeIx where
   (==) :: SomeIx -> SomeIx -> Bool
@@ -222,10 +219,10 @@ toSomeIx = toSomeIxRaw . bimap fromIntegral fromIntegral
 prop> toSomeIxRaw (fromSomeIxRaw i) == i
 -}
 toSomeIxRaw :: (IxRep, IxRep) -> SomeIx
-toSomeIxRaw (bound, index)
-  | index < 0 = error $ printf "index cannot contain negative value, found index %d" (toInteger index)
-  | bound <= index = error $ printf "bound must be larger than index, found bound %d and index %d" (toInteger bound) (toInteger index)
-  | otherwise = SomeIx (UnsafeSNat bound) (UnsafeIx index)
+toSomeIxRaw (n, i)
+  | i < 0 = error $ printf "index cannot contain negative value, found index %d" i
+  | n <= i = error $ printf "bound must be larger than index, found bound %d and index %d" n i
+  | otherwise = SomeIx (UnsafeSNat n) (UnsafeIx i)
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped index.
 fromSomeIx :: (Integral i) => SomeIx -> (i, i)

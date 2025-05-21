@@ -59,7 +59,7 @@ mkKeepRep :: ThRep -> ThRep
 mkKeepRep th =
   assert (isValidThRep th) $
     ThRep
-      { size = succ th.size
+      { size = 1 + th.size
       , bits = th.bits
       }
 
@@ -67,7 +67,7 @@ mkDropRep :: ThRep -> ThRep
 mkDropRep th =
   assert (isValidThRep th) $
     ThRep
-      { size = succ th.size
+      { size = 1 + th.size
       , bits = setBit th.bits th.size
       }
 

@@ -25,7 +25,9 @@ common language
     -Wunused-packages
 
   default-language:   GHC2021
-  default-extensions: ImportQualifiedPost
+  default-extensions:
+    ImportQualifiedPost
+    NoFieldSelectors
 
 library
   import:             language
@@ -84,6 +86,7 @@ library arbitrary
   exposed-modules:
     Data.DeBruijn.Index.Arbitrary
     Data.DeBruijn.Index.Inductive.Arbitrary
+    Data.DeBruijn.Thinning.Inductive.Arbitrary
     Data.Type.Nat.Singleton.Arbitrary
     Data.Type.Nat.Singleton.Inductive.Arbitrary
     Numeric.Natural.Arbitrary
@@ -109,7 +112,6 @@ library extras
     , data-debruijn:inductive
     , deepseq                  ^>=1.5
     , QuickCheck               >=2.9  && <3.0
-
 
 library README
   import:          language
