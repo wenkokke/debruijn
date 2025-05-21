@@ -52,15 +52,15 @@ library efficient
     Data.Type.Nat.Singleton.Unsafe
 
   build-depends:
-    , base        >=4.18  && <5
-    , deepseq     ^>=1.5
+    , base     >=4.18 && <5
+    , deepseq  ^>=1.5
 
   if flag(skew-list)
     build-depends: skew-list ^>=0.1
     cpp-options:   -DSKEW_LIST
-  else
-    build-depends: containers  >=0.6.8 && <0.9
 
+  else
+    build-depends: containers >=0.6.8 && <0.9
 
 library inductive
   import:          language
