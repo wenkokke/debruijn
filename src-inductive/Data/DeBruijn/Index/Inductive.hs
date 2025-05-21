@@ -27,7 +27,7 @@ module Data.DeBruijn.Index.Inductive (
 ) where
 
 import Control.DeepSeq (NFData (..))
-import Data.DeBruijn.Index qualified as Efficient
+import Data.DeBruijn.Index qualified as Unsafe
 import Data.Kind (Type)
 import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))
@@ -65,15 +65,15 @@ instance Eq (Ix n) where
 
 deriving instance Show (Ix n)
 
--- | Convert from the efficient representation 'Efficient.Ix' to the inductive representation 'Ix'.
-toInductive :: Efficient.Ix n -> Ix n
-toInductive Efficient.FZ = FZ
-toInductive (Efficient.FS i) = FS (toInductive i)
+-- | Convert from the efficient representation 'Unsafe.Ix' to the inductive representation 'Ix'.
+toInductive :: Unsafe.Ix n -> Ix n
+toInductive Unsafe.FZ = FZ
+toInductive (Unsafe.FS i) = FS (toInductive i)
 
--- | Convert from the inductive representation 'Ix' to the efficient representation 'Efficient.Ix'.
-fromInductive :: Ix n -> Efficient.Ix n
-fromInductive FZ = Efficient.FZ
-fromInductive (FS i) = Efficient.FS (fromInductive i)
+-- | Convert from the inductive representation 'Ix' to the efficient representation 'Unsafe.Ix'.
+fromInductive :: Ix n -> Unsafe.Ix n
+fromInductive FZ = Unsafe.FZ
+fromInductive (FS i) = Unsafe.FS (fromInductive i)
 
 -- | Convert an 'Ix' to 'Word'.
 {-# SPECIALIZE fromIx :: Ix n -> Int #-}

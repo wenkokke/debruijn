@@ -1,7 +1,7 @@
 cabal-version:   3.4
 name:            data-debruijn
 version:         0.0.0.0
-synopsis:        Efficient and type-safe implementation of DeBruijn indices.
+synopsis:        unsafe and type-safe implementation of DeBruijn indices.
 description:
   See <https://github.com/wenkokke/gilear/blob/main/packages/data-debruijn/#README>
 
@@ -38,12 +38,12 @@ library
 
   build-depends:
     , base                     >=4.18 && <5
-    , data-debruijn:efficient
+    , data-debruijn:unsafe
 
-library efficient
+library unsafe
   import:          language
   visibility:      public
-  hs-source-dirs:  src-efficient
+  hs-source-dirs:  src-unsafe
   exposed-modules:
     Data.DeBruijn.Environment.Unsafe
     Data.DeBruijn.Index.Unsafe

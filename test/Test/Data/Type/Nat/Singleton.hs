@@ -12,15 +12,15 @@ tests :: TestTree
 tests =
   testGroup
     "Test.Data.Type.Nat.Singleton"
-    [ -- Test correspondence between Efficient and Inductive APIs
+    [ -- Test correspondence between Unsafe and Inductive APIs
       testProperty "test_fromSNatRawEq" test_fromSNatRawEq
     , testProperty "test_fromSNatEq" test_fromSNatEq
     , testProperty "test_decSNatEq" test_decSNatEq
-    , -- Test conversion to/from numbers of Efficient API
-      testProperty "test_Efficient_fromSomeSNat_eq_fromSomeSNatRaw" test_Efficient_fromSomeSNat_eq_fromSomeSNatRaw
-    , testProperty "test_Efficient_toSomeSNat_eq_toSomeSNatRaw" test_Efficient_toSomeSNat_eq_toSomeSNatRaw
-    , testProperty "test_Efficient_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Efficient_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
-    , testProperty "test_Efficient_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Efficient_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
+    , -- Test conversion to/from numbers of Unsafe API
+      testProperty "test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw" test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw
+    , testProperty "test_Unsafe_toSomeSNat_eq_toSomeSNatRaw" test_Unsafe_toSomeSNat_eq_toSomeSNatRaw
+    , testProperty "test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
+    , testProperty "test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
     , -- Test conversion to/from numbers of Inductive API
       testProperty "test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw" test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw
     , testProperty "test_Inductive_toSomeSNat_eq_toSomeSNatRaw" test_Inductive_toSomeSNat_eq_toSomeSNatRaw
@@ -29,7 +29,7 @@ tests =
     ]
 
 --------------------------------------------------------------------------------
--- Test correspondence between Efficient and Inductive APIs
+-- Test correspondence between Unsafe and Inductive APIs
 --------------------------------------------------------------------------------
 
 test_fromSNatRawEq :: Inductive.SomeSNat -> Bool
@@ -45,23 +45,23 @@ test_decSNatEq (Inductive.SomeSNat m) (Inductive.SomeSNat n) =
   Inductive.decSNat m n == Unsafe.decSNat (Unsafe.fromInductive m) (Unsafe.fromInductive n)
 
 --------------------------------------------------------------------------------
--- Test conversion to/from numbers of Efficient API
+-- Test conversion to/from numbers of Unsafe API
 --------------------------------------------------------------------------------
 
-test_Efficient_fromSomeSNat_eq_fromSomeSNatRaw :: Unsafe.SomeSNat -> Bool
-test_Efficient_fromSomeSNat_eq_fromSomeSNatRaw n =
+test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw :: Unsafe.SomeSNat -> Bool
+test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw n =
   Unsafe.fromSomeSNat n == Unsafe.fromSomeSNatRaw n
 
-test_Efficient_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
-test_Efficient_toSomeSNat_eq_toSomeSNatRaw (NonNegative u) =
+test_Unsafe_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
+test_Unsafe_toSomeSNat_eq_toSomeSNatRaw (NonNegative u) =
   Unsafe.toSomeSNat u == Unsafe.toSomeSNatRaw u
 
-test_Efficient_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Unsafe.SomeSNat -> Bool
-test_Efficient_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
+test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Unsafe.SomeSNat -> Bool
+test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
   Unsafe.toSomeSNatRaw (Unsafe.fromSomeSNatRaw n) == n
 
-test_Efficient_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
-test_Efficient_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative u) =
+test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
+test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative u) =
   Unsafe.fromSomeSNatRaw (Unsafe.toSomeSNatRaw u) == u
 
 --------------------------------------------------------------------------------

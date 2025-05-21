@@ -38,7 +38,7 @@ import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))
 import Data.Type.Equality qualified as Eq
 import Data.Type.Nat (Nat (..), type (+))
-import Data.Type.Nat.Singleton qualified as Efficient
+import Data.Type.Nat.Singleton qualified as Unsafe
 
 {- $setup
 >>> import Data.Type.Nat.Singleton.Inductive.Arbitrary
@@ -59,15 +59,15 @@ instance NFData (SNat n) where
   rnf Z = ()
   rnf (S n) = rnf n
 
--- | Convert from the efficient representation 'Efficient.SNat' to the inductive representation 'SNat'.
-toInductive :: Efficient.SNat n -> SNat n
-toInductive Efficient.Z = Z
-toInductive (Efficient.S n) = S (toInductive n)
+-- | Convert from the efficient representation 'Unsafe.SNat' to the inductive representation 'SNat'.
+toInductive :: Unsafe.SNat n -> SNat n
+toInductive Unsafe.Z = Z
+toInductive (Unsafe.S n) = S (toInductive n)
 
--- | Convert from the inductive representation 'SNat' to the efficient representation 'Efficient.SNat'.
-fromInductive :: SNat n -> Efficient.SNat n
-fromInductive Z = Efficient.Z
-fromInductive (S n) = Efficient.S (fromInductive n)
+-- | Convert from the inductive representation 'SNat' to the efficient representation 'Unsafe.SNat'.
+fromInductive :: SNat n -> Unsafe.SNat n
+fromInductive Z = Unsafe.Z
+fromInductive (S n) = Unsafe.S (fromInductive n)
 
 instance Show (SNat n) where
   showsPrec :: Int -> SNat n -> ShowS

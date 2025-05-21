@@ -22,7 +22,7 @@ module Data.DeBruijn.Thinning.Inductive (
 import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Inductive (Ix (..), isPos)
-import Data.DeBruijn.Thinning qualified as Efficient
+import Data.DeBruijn.Thinning qualified as Unsafe
 import Data.Kind (Constraint, Type)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton.Inductive (SNat (..))
@@ -51,17 +51,17 @@ instance NFData (n :<= m) where
   rnf (Keep n'm') = rnf n'm'
   rnf (Drop nm') = rnf nm'
 
--- | Convert from the efficient representation 'Efficient.:<=' to the inductive representation ':<='.
-toInductive :: n Efficient.:<= m -> n :<= m
-toInductive Efficient.Done = Done
-toInductive (Efficient.Keep n'm') = Keep (toInductive n'm')
-toInductive (Efficient.Drop nm') = Drop (toInductive nm')
+-- | Convert from the efficient representation 'Unsafe.:<=' to the inductive representation ':<='.
+toInductive :: n Unsafe.:<= m -> n :<= m
+toInductive Unsafe.Done = Done
+toInductive (Unsafe.Keep n'm') = Keep (toInductive n'm')
+toInductive (Unsafe.Drop nm') = Drop (toInductive nm')
 
--- | Convert from the inductive representation ':<=' to the efficient representation 'Efficient.:<='.
-fromInductive :: n :<= m -> n Efficient.:<= m
-fromInductive Done = Efficient.Done
-fromInductive (Keep n'm') = Efficient.Keep (fromInductive n'm')
-fromInductive (Drop nm') = Efficient.Drop (fromInductive nm')
+-- | Convert from the inductive representation ':<=' to the efficient representation 'Unsafe.:<='.
+fromInductive :: n :<= m -> n Unsafe.:<= m
+fromInductive Done = Unsafe.Done
+fromInductive (Keep n'm') = Unsafe.Keep (fromInductive n'm')
+fromInductive (Drop nm') = Unsafe.Drop (fromInductive nm')
 
 -- | Convert a thinning into a list of booleans.
 toBools :: n :<= m -> [Bool]
