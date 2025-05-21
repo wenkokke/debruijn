@@ -13,6 +13,11 @@ category:        Language
 build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
+flag skew-list
+  description: Use the skew-list package to represent environments.
+  manual:      True
+  default:     False
+
 common language
   ghc-options:
     -Wall -Wcompat -Widentities -Wprepositive-qualified-module
@@ -50,6 +55,10 @@ library efficient
     , base        >=4.18  && <5
     , containers  >=0.6.8 && <0.9
     , deepseq     ^>=1.5
+
+  if flag(skew-list)
+    build-depends: skew-list ^>=0.1
+    ghc-options:   -DSKEW_LIST
 
 library inductive
   import:          language

@@ -16,13 +16,13 @@ module Data.DeBruijn.Environment.Unsafe (
   Env (UnsafeEnv, envRep),
 ) where
 
+import Data.DeBruijn.Index.Unsafe (Ix (ixRep))
 import Data.Kind (Type)
+import Data.Maybe (fromMaybe)
 import Data.Sequence (Seq (..))
 import Data.Sequence qualified as Seq
 import Data.Type.Nat (Nat (..), Pos, Pred)
 import Unsafe.Coerce (unsafeCoerce)
-import Data.DeBruijn.Index.Unsafe (Ix (ixRep))
-import Data.Maybe (fromMaybe)
 import Prelude hiding (lookup)
 
 --------------------------------------------------------------------------------
@@ -93,6 +93,5 @@ pattern (:>) xs x <- (projectEnv -> SnocF xs x) where (:>) xs x = embedEnv (Snoc
 
 lookup :: Ix n -> Env n a -> a
 lookup i xs = fromMaybe err (Seq.lookup i.ixRep xs.envRep)
-  where
-    err = error "Oh, how the illusion of safety is shattered!"
-
+ where
+  err = error "Oh, how the illusion of safety is shattered!"

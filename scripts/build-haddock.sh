@@ -37,6 +37,6 @@ if ! ${HADDOCK} \
   --quickjump \
   --gen-index \
   --gen-contents \
-  --read-interface=data-debruijn,./doc/reference/data-debruijn/data-debruijn.haddock \
+  --read-interface=data-debruijn,./doc/reference/data-debruijn/data-debruijn.haddock; then
   exit 1
 fi
