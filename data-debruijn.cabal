@@ -42,7 +42,6 @@ library efficient
   exposed-modules:
     Data.DeBruijn.Environment.Unsafe
     Data.DeBruijn.Index.Unsafe
-    Data.DeBruijn.Level.Unsafe
     Data.DeBruijn.Thinning.Unsafe
     Data.Type.Nat
     Data.Type.Nat.Singleton.Unsafe

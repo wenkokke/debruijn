@@ -3,6 +3,7 @@
 {-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RoleAnnotations #-}
@@ -30,7 +31,7 @@ module Data.DeBruijn.Index.Unsafe (
   fromSomeIxRaw,
 
   -- * Unsafe
-  Ix (UnsafeIx),
+  Ix (UnsafeIx, ixRep),
 ) where
 
 import Control.DeepSeq (NFData (..))
@@ -62,15 +63,15 @@ mkFSRep :: IxRep -> IxRep
 mkFSRep = succ
 {-# INLINE mkFSRep #-}
 
-getIxRepChild :: IxRep -> IxRep
-getIxRepChild r =
+unFSRep :: IxRep -> IxRep
+unFSRep r =
   assert (r /= mkFZRep) $
     pred r
-{-# INLINE getIxRepChild #-}
+{-# INLINE unFSRep #-}
 
-recIxRep :: IxRep -> a -> (IxRep -> a) -> a
-recIxRep r ifZ ifS = if r == mkFZRep then ifZ else ifS (getIxRepChild r)
-{-# INLINE recIxRep #-}
+elIxRep :: a -> (IxRep -> a) -> IxRep -> a
+elIxRep ifZ ifS r = if r == mkFZRep then ifZ else ifS (unFSRep r)
+{-# INLINE elIxRep #-}
 
 thinRep :: IxRep -> IxRep -> IxRep
 thinRep i j
@@ -89,7 +90,7 @@ thickRep i j = case i `compare` j of
 
 -- | @'Ix' n@ is the type of DeBruijn indices less than @n@.
 type Ix :: Nat -> Type
-newtype Ix n = UnsafeIx {getIxRep :: IxRep}
+newtype Ix n = UnsafeIx {ixRep :: IxRep}
 
 type role Ix nominal
 
@@ -116,21 +117,21 @@ mkFZ = UnsafeIx mkFZRep
 {-# INLINE mkFZ #-}
 
 mkFS :: Ix n -> Ix (S n)
-mkFS = UnsafeIx . mkFSRep . getIxRep
+mkFS = UnsafeIx . mkFSRep . (.ixRep)
 {-# INLINE mkFS #-}
 
-recIx :: Ix n -> a -> (Ix (Pred n) -> a) -> a
-recIx r ifFZ ifFS = recIxRep (getIxRep r) ifFZ (ifFS . UnsafeIx)
-{-# INLINE recIx #-}
+elIx :: a -> (Ix (Pred n) -> a) -> Ix n -> a
+elIx ifFZ ifFS = elIxRep ifFZ (ifFS . UnsafeIx) . (.ixRep)
+{-# INLINE elIx #-}
 
 -- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
 fromIx :: (Integral i) => Ix n -> i
-fromIx (UnsafeIx u) = fromInteger (toInteger u)
+fromIx = fromInteger . toInteger . (.ixRep)
 {-# INLINE fromIx #-}
 
 -- | @'fromIxRaw' n@ returns the raw numeric representation of 'SNat n'.
 fromIxRaw :: Ix n -> Int
-fromIxRaw (UnsafeIx w) = w
+fromIxRaw = (.ixRep)
 {-# INLINE fromIxRaw #-}
 
 -- | @'IxF'@ is the base functor of @'Ix'@.
@@ -139,7 +140,7 @@ data IxF (ix :: Nat -> Type) (n :: Nat) :: Type where
   FSF :: !(ix m) -> IxF ix (S m)
 
 projectIx :: Ix n -> IxF Ix n
-projectIx i = recIx i (unsafeCoerce FZF) (unsafeCoerce . FSF)
+projectIx = elIx (unsafeCoerce FZF) (unsafeCoerce . FSF)
 {-# INLINE projectIx #-}
 
 embedIx :: IxF Ix n -> Ix n

@@ -71,8 +71,8 @@ mkDropRep th =
       , bits = setBit th.bits th.size
       }
 
-getThRepChild :: ThRep -> ThRep
-getThRepChild th =
+unKeepDropRep :: ThRep -> ThRep
+unKeepDropRep th =
   assert (isValidThRep th && th /= mkDoneRep) $
     let size' = pred th.size
     in  ThRep
@@ -87,8 +87,8 @@ elThRep th ifDone ifKeep ifDrop =
       then ifDone
       else
         if testBit th.bits (pred th.size)
-          then ifKeep (getThRepChild th)
-          else ifDrop (getThRepChild th)
+          then ifKeep (unKeepDropRep th)
+          else ifDrop (unKeepDropRep th)
 
 thinThRep :: ThRep -> ThRep -> ThRep
 thinThRep th1 th2 =
