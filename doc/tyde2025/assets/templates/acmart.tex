@@ -1,0 +1,244 @@
+\documentclass[sigplan,screen]{acmart}
+
+% TODO:
+% Validate packages against the ACM TAPS accepted package list
+% See: https://authors.acm.org/proceedings/production-information/accepted-latex-packages
+
+\undef\Bbbk%
+% lhs2TeX:
+%include polycode.fmt
+
+${ if(lang) }
+\ifLuaTeX
+\usepackage[bidi=basic${ for(babeloptions) },${ babeloptions }${ endfor }]{babel}
+\else
+\usepackage[bidi=default${ for(babeloptions) },${ babeloptions }${ endfor }]{babel}
+\fi
+${ if(babel-lang) }
+${ if(mainfont) }
+\ifPDFTeX
+\else
+\babelfont{rm}[${ for(mainfontoptions) }${ mainfontoptions }${ sep },${ endfor }${ if(mainfontfallback) },RawFeature={fallback=mainfontfallback}${ endif }]{${ mainfont }}
+\fi
+${ endif }
+${ endif }
+${ for(babelfonts/pairs) }
+\babelfont[${ babelfonts.key }]{rm}{${ babelfonts.value }}
+$endfor$
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+${ if(selnolig-langs) }
+\ifLuaTeX
+  \usepackage[${ for(selnolig-langs) }${ it }${ sep },${ endfor }]{selnolig} % disable illegal ligatures
+\fi
+${ endif }
+${ endif }
+
+%% prevent overfull lines
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+%% tight lists
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Preamble:
+${ for(header-includes) }
+${ header-includes }
+${ endfor }
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+${ if(copyright) }
+\setcopyright{${ copyright }}
+${ else }
+\setcopyright{none}
+${ endif }
+${ if(copyrightyear) }
+\copyrightyear{${ copyrightyear }}
+${ endif }
+${ if(acmYear) }
+\acmYear{${ acmYear }}
+${ endif }
+${ if(acmDOI) }
+\acmDOI{${ acmDOI }}
+${ else }
+\acmDOI{XXXXXXX.XXXXXXX}
+${ endif }
+
+%% These commands are for a PROCEEDINGS abstract or paper.
+% \acmConference[Conference acronym 'XX]{Make sure to enter the correct
+%   conference title from your rights confirmation email}{June 03--05,
+%   2018}{Woodstock, NY}
+%%
+%%  Uncomment \acmBooktitle if the title of the proceedings is different
+%%  from ``Proceedings of ...''!
+%%
+%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+%%  June 03--05, 2018, Woodstock, NY}
+% \acmISBN{978-1-4503-XXXX-X/2018/06}
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{${ title }}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+${ for(author) }
+\author{${ it.name }}
+${ if(it.note) }
+\authornote{${ it.note }}
+${ endif }
+${ if(it.email) }
+\email{${ it.email }}
+${ endif }
+${ if(it.orcid) }
+\orcid{${ it.orcid }}
+${ endif }
+${ if(it.affiliation) }
+\affiliation{
+  ${ if(it.institution) }
+  \institution{${ it.institution }}
+  ${ endif }
+  ${ if(it.city) }
+  \city{${ it.city }}
+  ${ endif }
+  ${ if(it.state) }
+  \state{${ it.state }}
+  ${ endif }
+  ${ if(it.country) }
+  \country{${ it.country }}
+  ${ endif }
+}
+${ endif }
+${ endfor }
+
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+${ if(shortauthors) }
+\renewcommand{\shortauthors}{${ shortauthors }}
+${ endif }
+
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+${ if(abstract) }
+\begin{abstract}
+  ${ abstract }
+\end{abstract}
+${ endif }
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>00000000.0000000.0000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Do, Not, Us, This, Code, Put, the, Correct, Terms, for, Your, Paper}
+
+%% A "teaser" image appears between the author and affiliation
+%% information and the body of the document, and typically spans the
+%% page.
+% \begin{teaserfigure}
+%   \includegraphics[width=\textwidth]{sampleteaser}
+%   \caption{Seattle Mariners at Spring Training, 2010.}
+%   \Description{Enjoying the baseball game from the third-base
+%   seats. Ichiro Suzuki preparing to bat.}
+%   \label{fig:teaser}
+% \end{teaserfigure}
+
+\received{20 February 2007}
+\received[revised]{12 March 2009}
+\received[accepted]{5 June 2009}
+
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+${ body }
+
+%% The next two lines define the bibliography style to be used, and
+%% the bibliography file.
+${ if(bibliography) }
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{${ bibliography }}
+${ endif }
+
+\end{document}
+\endinput
