@@ -24,7 +24,7 @@ module Data.DeBruijn.Thinning.Inductive (
 import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Inductive (Ix (..), isPos)
-import Data.DeBruijn.Thinning qualified as Unsafe
+import Data.DeBruijn.Thinning.Unsafe qualified as Unsafe
 import Data.Kind (Constraint, Type)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton.Inductive (SNat (..))

@@ -27,7 +27,7 @@ module Data.DeBruijn.Index.Inductive (
 ) where
 
 import Control.DeepSeq (NFData (..))
-import Data.DeBruijn.Index qualified as Unsafe
+import Data.DeBruijn.Index.Unsafe qualified as Unsafe
 import Data.Kind (Type)
 import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))

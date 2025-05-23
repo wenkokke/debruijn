@@ -2,14 +2,14 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Data.DeBruijn.Index.Arbitrary (
+module Data.DeBruijn.Index.Unsafe.Arbitrary (
   arbitraryIx,
 ) where
 
-import Data.DeBruijn.Index (Ix (..), SomeIx (..), toSomeIxRaw)
+import Data.DeBruijn.Index.Unsafe (Ix (..), SomeIx (..), toSomeIxRaw)
 import Data.Type.Nat (Nat (..))
-import Data.Type.Nat.Singleton (SNat (..))
-import Data.Type.Nat.Singleton.Arbitrary ()
+import Data.Type.Nat.Singleton.Unsafe (SNat (..))
+import Data.Type.Nat.Singleton.Unsafe.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
 import Test.QuickCheck.Gen (Gen, oneof)
 import Test.QuickCheck.Modifiers (NonNegative (..), Positive (..))

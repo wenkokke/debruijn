@@ -1,15 +1,16 @@
 module Test.Data.DeBruijn.Index (tests) where
 
-import Data.DeBruijn.Index qualified as Unsafe
 import Data.DeBruijn.Index.Inductive (SomeIx (bound, index))
 import Data.DeBruijn.Index.Inductive qualified as Inductive
 import Data.DeBruijn.Index.Inductive qualified as Unsafe (fromInductive, toInductive)
-import Data.DeBruijn.Index.Inductive.Arbitrary ()
-import Data.DeBruijn.Index.Inductive.Extra qualified as Inductive (SomeThickArgs (..), SomeThinArgs (..))
+import Data.DeBruijn.Index.Inductive.Arbitrary qualified as Inductive (arbitraryIx)
+import Data.DeBruijn.Index.Unsafe qualified as Unsafe
 import Data.Proxy (Proxy (..))
+import Data.Type.Nat.Singleton.Inductive (SNat (..))
 import Data.Type.Nat.Singleton.Inductive qualified as Inductive (SomeSNat (..))
+import Data.Type.Nat.Singleton.Inductive.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (testProperty)
+import Test.Tasty.QuickCheck (Arbitrary (..), Gen, testProperty)
 
 tests :: TestTree
 tests =
@@ -39,13 +40,21 @@ test_injectEq :: Inductive.SomeSNat -> Inductive.SomeIx -> Bool
 test_injectEq (Inductive.SomeSNat n) (Inductive.SomeIx{index = i, bound = _}) =
   Inductive.inject n i == Unsafe.toInductive (Unsafe.inject (erase n) (Unsafe.fromInductive i))
 
-test_thinEq :: Inductive.SomeThinArgs -> Bool
-test_thinEq (Inductive.SomeThinArgs _n i j) =
-  Inductive.thin i j == Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+test_thinEq :: Gen Bool
+test_thinEq = do
+  Inductive.SomeSNat n <- arbitrary
+  i <- Inductive.arbitraryIx (S (S n))
+  j <- Inductive.arbitraryIx (S n)
+  pure $
+    Inductive.thin i j == Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive i) (Unsafe.fromInductive j))
 
-test_thickEq :: Inductive.SomeThickArgs -> Bool
-test_thickEq (Inductive.SomeThickArgs _n i j) =
-  Inductive.thick i j == (Unsafe.toInductive <$> Unsafe.thick (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+test_thickEq :: Gen Bool
+test_thickEq = do
+  Inductive.SomeSNat n <- arbitrary
+  i <- Inductive.arbitraryIx (S n)
+  j <- Inductive.arbitraryIx (S n)
+  pure $
+    Inductive.thick i j == (Unsafe.toInductive <$> Unsafe.thick (Unsafe.fromInductive i) (Unsafe.fromInductive j))
 
 --------------------------------------------------------------------------------
 -- Helper Functions

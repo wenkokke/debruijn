@@ -39,8 +39,27 @@ library
     Data.Type.Nat.Singleton
 
   build-depends:
-    , base                  >=4.18 && <5
+    , base                    >=4.18 && <5
+    , data-debruijn:typenats
     , data-debruijn:unsafe
+
+  -- NOTE: GHC does not detect that the package "data-debruijn:typenats"
+  --       is used by the "reexported-modules" declaration.
+  ghc-options:        -Wno-unused-packages
+
+library README
+  import:         language
+  visibility:     private
+  hs-source-dirs: doc
+  other-modules:  README
+  build-depends:  base >=4.18 && <5
+
+library typenats
+  import:          language
+  visibility:      public
+  hs-source-dirs:  src-typenats
+  exposed-modules: Data.Type.Nat
+  build-depends:   base >=4.18 && <5
 
 library unsafe
   import:          language
@@ -50,12 +69,12 @@ library unsafe
     Data.DeBruijn.Environment.Unsafe
     Data.DeBruijn.Index.Unsafe
     Data.DeBruijn.Thinning.Unsafe
-    Data.Type.Nat
     Data.Type.Nat.Singleton.Unsafe
 
   build-depends:
-    , base     >=4.18 && <5
-    , deepseq  ^>=1.5
+    , base                    >=4.18 && <5
+    , data-debruijn:typenats
+    , deepseq                 ^>=1.5
 
   if flag(skew-list)
     build-depends: skew-list ^>=0.1
@@ -75,50 +94,29 @@ library inductive
     Data.Type.Nat.Singleton.Inductive
 
   build-depends:
-    , base           >=4.18 && <5
-    , data-debruijn
-    , deepseq        ^>=1.5
+    , base                    >=4.18 && <5
+    , data-debruijn:typenats
+    , data-debruijn:unsafe
+    , deepseq                 ^>=1.5
 
 library arbitrary
   import:          language
   visibility:      public
   hs-source-dirs:  src-arbitrary
   exposed-modules:
-    Data.DeBruijn.Index.Arbitrary
     Data.DeBruijn.Index.Inductive.Arbitrary
+    Data.DeBruijn.Index.Unsafe.Arbitrary
     Data.DeBruijn.Thinning.Inductive.Arbitrary
-    Data.Type.Nat.Singleton.Arbitrary
     Data.Type.Nat.Singleton.Inductive.Arbitrary
+    Data.Type.Nat.Singleton.Unsafe.Arbitrary
     Numeric.Natural.Arbitrary
 
   build-depends:
     , base
-    , data-debruijn
     , data-debruijn:inductive
+    , data-debruijn:typenats
+    , data-debruijn:unsafe
     , QuickCheck               >=2.9 && <3.0
-
-library extras
-  import:          language
-  visibility:      private
-  hs-source-dirs:  src-extras
-  exposed-modules:
-    Data.DeBruijn.Index.Extra
-    Data.DeBruijn.Index.Inductive.Extra
-
-  build-depends:
-    , base
-    , data-debruijn
-    , data-debruijn:arbitrary
-    , data-debruijn:inductive
-    , deepseq                  ^>=1.5
-    , QuickCheck               >=2.9  && <3.0
-
-library README
-  import:         language
-  visibility:     private
-  hs-source-dirs: doc
-  other-modules:  README
-  build-depends:  base >=4.18 && <5
 
 test-suite data-debruijn-test
   import:         language
@@ -132,10 +130,9 @@ test-suite data-debruijn-test
 
   build-depends:
     , base
-    , data-debruijn
     , data-debruijn:arbitrary
-    , data-debruijn:extras
     , data-debruijn:inductive
+    , data-debruijn:unsafe
     , tasty
     , tasty-quickcheck
 
@@ -148,9 +145,8 @@ benchmark data-debruijn-bench-time
   build-depends:
     , base
     , criterion                ^>=1.6
-    , data-debruijn
-    , data-debruijn:extras
     , data-debruijn:inductive
+    , data-debruijn:unsafe
     , deepseq                  ^>=1.5
 
 benchmark data-debruijn-bench-space
@@ -163,8 +159,7 @@ benchmark data-debruijn-bench-space
     , base
     , bytestring
     , cassava                  ^>=0.5
-    , data-debruijn
-    , data-debruijn:extras
     , data-debruijn:inductive
+    , data-debruijn:unsafe
     , deepseq                  ^>=1.5
     , weigh                    ^>=0.0.18

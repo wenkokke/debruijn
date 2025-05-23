@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Data.Type.Nat.Singleton.Arbitrary () where
+module Data.Type.Nat.Singleton.Unsafe.Arbitrary () where
 
-import Data.Type.Nat.Singleton (SomeSNat (..), fromSomeSNatRaw, toSomeSNatRaw)
+import Data.Type.Nat.Singleton.Unsafe (SomeSNat (..), fromSomeSNatRaw, toSomeSNatRaw)
 import Numeric.Natural.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..), CoArbitrary (..), shrinkIntegral)
 import Test.QuickCheck.Function (Function (..), functionMap, (:->))

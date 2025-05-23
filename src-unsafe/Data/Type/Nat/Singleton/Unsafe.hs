@@ -49,7 +49,7 @@ import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
 {- $setup
->>> import Data.Type.Nat.Singleton.Arbitrary
+>>> import Data.Type.Nat.Singleton.Unsafe.Arbitrary
 -}
 
 --------------------------------------------------------------------------------

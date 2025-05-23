@@ -39,7 +39,7 @@ import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))
 import Data.Type.Equality qualified as Eq
 import Data.Type.Nat (Nat (..), type (+))
-import Data.Type.Nat.Singleton qualified as Unsafe
+import Data.Type.Nat.Singleton.Unsafe qualified as Unsafe
 
 {- $setup
 >>> import Data.Type.Nat.Singleton.Inductive.Arbitrary

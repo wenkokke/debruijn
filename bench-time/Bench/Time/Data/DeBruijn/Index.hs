@@ -1,15 +1,19 @@
+{-# LANGUAGE ExplicitNamespaces #-}
+{-# LANGUAGE GADTs #-}
+
 module Bench.Time.Data.DeBruijn.Index (
   benchmarks,
 ) where
 
-import Control.DeepSeq (NFData, force)
-import Criterion.Main (Benchmark, Benchmarkable, bench, bgroup, nf)
-import Data.DeBruijn.Index qualified as Unsafe
-import Data.DeBruijn.Index.Extra qualified as Unsafe
+import Control.DeepSeq (force)
+import Criterion.Main (Benchmark, bench, bgroup, nf)
 import Data.DeBruijn.Index.Inductive qualified as Inductive
-import Data.DeBruijn.Index.Inductive.Extra qualified as Inductive
+import Data.DeBruijn.Index.Unsafe qualified as Unsafe
 import Data.Functor ((<&>))
 import Data.List (nub)
+import Data.Type.Equality (type (:~:) (Refl))
+import Data.Type.Nat.Singleton.Inductive qualified as Inductive
+import Data.Type.Nat.Singleton.Unsafe qualified as Unsafe
 import Text.Printf (printf)
 
 benchmarks :: Benchmark
@@ -28,33 +32,30 @@ bench_thin :: Benchmark
 bench_thin =
   bgroup
     "thin"
-    [ bgroup "Unsafe" (bench_unsafeThinWith <$> thinArgsRawList)
-    , bgroup "Inductive" (bench_inductiveThinWith <$> thinArgsRawList)
+    [ bgroup "Unsafe" (bench_thin_Unsafe <$> bench_thin_Args)
+    , bgroup "Inductive" (bench_thin_Inductive <$> bench_thin_Args)
     ]
 
-bench_unsafeThinWith :: (Int, Int, Int) -> Benchmark
-bench_unsafeThinWith =
-  bench_thinWith Unsafe.toSomeThinArgsRaw $ \(Unsafe.SomeThinArgs _n i j) ->
-    nf (Unsafe.thin i) j
+bench_thin_Unsafe :: (Int, Int, Int) -> Benchmark
+bench_thin_Unsafe (nRaw, iRaw, jRaw)
+  | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
+  , Unsafe.SomeIx sn i <- force (Unsafe.toSomeIxRaw (nRaw + 1, iRaw))
+  , Unsafe.SomeIx n j <- force (Unsafe.toSomeIxRaw (nRaw, jRaw))
+  , Just Refl <- Unsafe.decSNat sn (Unsafe.S n) =
+      bench benchLabel $ nf (Unsafe.thin i) j
+  | otherwise = error "bench_thin_Unsafe: could not construct benchmark"
 
-bench_inductiveThinWith :: (Int, Int, Int) -> Benchmark
-bench_inductiveThinWith =
-  bench_thinWith Inductive.toSomeThinArgsRaw $ \(Inductive.SomeThinArgs _n i j) ->
-    nf (Inductive.thin i) j
+bench_thin_Inductive :: (Int, Int, Int) -> Benchmark
+bench_thin_Inductive (nRaw, iRaw, jRaw)
+  | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
+  , Inductive.SomeIx sn i <- force (Inductive.toSomeIxRaw (nRaw + 1, iRaw))
+  , Inductive.SomeIx n j <- force (Inductive.toSomeIxRaw (nRaw, jRaw))
+  , Just Refl <- Inductive.decSNat sn (Inductive.S n) =
+      bench benchLabel $ nf (Inductive.thin i) j
+  | otherwise = error "bench_thin_Inductive: could not construct benchmark"
 
-bench_thinWith ::
-  (NFData someThinArgs) =>
-  ((Int, Int, Int) -> someThinArgs) ->
-  (someThinArgs -> Benchmarkable) ->
-  (Int, Int, Int) ->
-  Benchmark
-bench_thinWith toSomeThinArgs action thinArgsRaw@(_n, i, j) = do
-  let !benchLabel = printf "[%d,%d]" i j
-  let !someThinArgs = force (toSomeThinArgs thinArgsRaw)
-  bench benchLabel (action someThinArgs)
-
-thinArgsRawList :: [(Int, Int, Int)]
-thinArgsRawList = nub (varyingParameter0 <> varyingParameter1)
+bench_thin_Args :: [(Int, Int, Int)]
+bench_thin_Args = nub (varyingParameter0 <> varyingParameter1)
  where
   varyingParameter0 =
     [ (101, i, j)
@@ -74,33 +75,30 @@ bench_thick :: Benchmark
 bench_thick =
   bgroup
     "thick"
-    [ bgroup "Unsafe" (bench_unsafeThickWith <$> thickArgsRawList)
-    , bgroup "Inductive" (bench_inductiveThickWith <$> thickArgsRawList)
+    [ bgroup "Unsafe" (bench_thick_Unsafe <$> bench_thick_Args)
+    , bgroup "Inductive" (bench_thick_Inductive <$> bench_thick_Args)
     ]
 
-bench_unsafeThickWith :: (Int, Int, Int) -> Benchmark
-bench_unsafeThickWith =
-  bench_thickWith Unsafe.toSomeThickArgsRaw $ \(Unsafe.SomeThickArgs _n i j) ->
-    nf (Unsafe.thick i) j
+bench_thick_Unsafe :: (Int, Int, Int) -> Benchmark
+bench_thick_Unsafe (nRaw, iRaw, jRaw)
+  | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
+  , Unsafe.SomeIx (Unsafe.S n) i <- force (Unsafe.toSomeIxRaw (nRaw, iRaw))
+  , Unsafe.SomeIx (Unsafe.S n') j <- force (Unsafe.toSomeIxRaw (nRaw, jRaw))
+  , Just Refl <- Unsafe.decSNat n n' =
+      bench benchLabel $ nf (Unsafe.thick i) j
+  | otherwise = error "bench_thick_Unsafe: could not construct benchmark"
 
-bench_inductiveThickWith :: (Int, Int, Int) -> Benchmark
-bench_inductiveThickWith =
-  bench_thickWith Inductive.toSomeThickArgsRaw $ \(Inductive.SomeThickArgs _n i j) ->
-    nf (Inductive.thick i) j
+bench_thick_Inductive :: (Int, Int, Int) -> Benchmark
+bench_thick_Inductive (nRaw, iRaw, jRaw)
+  | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
+  , Inductive.SomeIx (Inductive.S n) i <- force (Inductive.toSomeIxRaw (nRaw, iRaw))
+  , Inductive.SomeIx (Inductive.S n') j <- force (Inductive.toSomeIxRaw (nRaw, jRaw))
+  , Just Refl <- Inductive.decSNat n n' =
+      bench benchLabel $ nf (Inductive.thick i) j
+  | otherwise = error "bench_thick_Inductive: could not construct benchmark"
 
-bench_thickWith ::
-  (NFData someThickArgs) =>
-  ((Int, Int, Int) -> someThickArgs) ->
-  (someThickArgs -> Benchmarkable) ->
-  (Int, Int, Int) ->
-  Benchmark
-bench_thickWith toSomeThickArgs action thickArgsRaw@(_n, i, j) = do
-  let !benchLabel = printf "[%d,%d]" i j
-  let !someThickArgs = force (toSomeThickArgs thickArgsRaw)
-  bench benchLabel (action someThickArgs)
-
-thickArgsRawList :: [(Int, Int, Int)]
-thickArgsRawList = nub (varyingParameter0 <> varyingParameter1)
+bench_thick_Args :: [(Int, Int, Int)]
+bench_thick_Args = nub (varyingParameter0 <> varyingParameter1)
  where
   varyingParameter0 =
     [ (101, i, j)

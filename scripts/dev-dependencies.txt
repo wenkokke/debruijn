@@ -8,5 +8,5 @@ ghc=9.8.2
 haddock=2.30.0
 hlint=3.8
 node=23
-prettier=3.4.1
+prettier=3.5.3
 shellcheck=0.10.0

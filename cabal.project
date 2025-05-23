@@ -1,2 +1,5 @@
 packages:
   data-debruijn.cabal
+
+tests: True
+benchmarks: True
