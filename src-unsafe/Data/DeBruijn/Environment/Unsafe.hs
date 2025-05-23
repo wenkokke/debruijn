@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -10,7 +11,7 @@
 module Data.DeBruijn.Environment.Unsafe (
   -- * Environments
   Env (Nil, (:>)),
-  lookup,
+  (!),
 
   -- * Unsafe
   Env (UnsafeEnv, envRep),
@@ -20,7 +21,6 @@ import Data.DeBruijn.Index.Unsafe (Ix (ixRep))
 import Data.Kind (Type)
 import Data.Type.Nat (Nat (..), Pos, Pred)
 import Unsafe.Coerce (unsafeCoerce)
-import Prelude hiding (lookup)
 
 --------------------------------------------------------------------------------
 -- Conditional Imports
@@ -104,6 +104,12 @@ newtype Env n a = UnsafeEnv {envRep :: EnvRep a}
 
 type role Env nominal representational
 
+deriving stock instance Functor (Env n)
+
+deriving stock instance Foldable (Env n)
+
+deriving stock instance Traversable (Env n)
+
 mkNil :: Env Z a
 mkNil = UnsafeEnv mkNilRep
 {-# INLINE mkNil #-}
@@ -141,5 +147,5 @@ pattern (:>) xs x <- (projectEnv -> SnocF xs x) where (:>) xs x = embedEnv (Snoc
 
 {-# COMPLETE Nil, (:>) #-}
 
-lookup :: Ix n -> Env n a -> a
-lookup i xs = lookupRep i.ixRep xs.envRep
+(!) :: Env n a -> Ix n -> a
+xs ! i = lookupRep i.ixRep xs.envRep

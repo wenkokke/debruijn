@@ -10,6 +10,8 @@
 module Data.DeBruijn.Thinning.Unsafe (
   -- * Thinnings
   (:<=) (Done, Keep, Drop),
+  keepAll,
+  dropAll,
   toBools,
 
   -- * Existential Wrapper
@@ -166,6 +168,16 @@ pattern Drop nm <- (projectTh -> DropF nm) where Drop nm = embedTh (DropF nm)
 {-# INLINE Drop #-}
 
 {-# COMPLETE Done, Keep, Drop #-}
+
+-- | The reflexive thinning.
+keepAll :: SNat n -> n :<= n
+keepAll Z = Done
+keepAll (S n) = Keep (keepAll n)
+
+-- | The thinning that drops all elements.
+dropAll :: SNat n -> Z :<= n
+dropAll Z = Done
+dropAll (S n) = Drop (dropAll n)
 
 -- | Convert a thinning into a list of booleans.
 toBools :: n :<= m -> [Bool]

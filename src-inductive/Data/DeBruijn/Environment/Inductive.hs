@@ -6,7 +6,7 @@
 module Data.DeBruijn.Environment.Inductive (
   Env (Nil, (:>)),
   decEnvLen,
-  lookup,
+  (!),
 ) where
 
 import Control.DeepSeq (NFData (..))
@@ -21,6 +21,12 @@ type Env :: Nat -> Type -> Type
 data Env n a where
   Nil :: Env Z a
   (:>) :: Env n a -> a -> Env (S n) a
+
+deriving stock instance Functor (Env n)
+
+deriving stock instance Foldable (Env n)
+
+deriving stock instance Traversable (Env n)
 
 decEnvLen :: Env n a -> Env m a -> Maybe (n :~: m)
 decEnvLen Nil Nil = Just Refl
@@ -39,7 +45,7 @@ instance (Eq a) => Eq (Env n a) where
 
 deriving instance (Show a) => Show (Env n a)
 
-lookup :: Env n a -> Ix n -> a
-lookup xs i = isPos i $ case (xs, i) of
+(!) :: Env n a -> Ix n -> a
+xs ! i = isPos i $ case (xs, i) of
   (_ys :> y, FZ) -> y
-  (ys :> _y, FS j) -> lookup ys j
+  (ys :> _y, FS j) -> ys ! j

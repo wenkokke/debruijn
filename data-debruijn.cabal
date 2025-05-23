@@ -32,14 +32,15 @@ common language
 library
   import:             language
   hs-source-dirs:     src
+  default-extensions: NoImplicitPrelude
   reexported-modules: Data.Type.Nat
   exposed-modules:
+    Data.DeBruijn.Environment
     Data.DeBruijn.Index
     Data.DeBruijn.Thinning
     Data.Type.Nat.Singleton
 
   build-depends:
-    , base                    >=4.18 && <5
     , data-debruijn:typenats
     , data-debruijn:unsafe
 
@@ -53,6 +54,15 @@ library README
   hs-source-dirs: doc
   other-modules:  README
   build-depends:  base >=4.18 && <5
+
+library samples
+  import:         language
+  visibility:     private
+  hs-source-dirs: doc/samples
+  other-modules:  STLC
+  build-depends:
+    , base           >=4.18 && <5
+    , data-debruijn
 
 library typenats
   import:          language
