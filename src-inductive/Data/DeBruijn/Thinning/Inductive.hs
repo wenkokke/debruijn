@@ -47,6 +47,14 @@ data (:<=) n m where
   Keep :: n :<= m -> S n :<= S m
   Drop :: n :<= m -> n :<= S m
 
+instance Eq (n :<= m) where
+  Done == Done = True
+  Keep nm == Keep n'm' = nm == n'm'
+  Drop nm == Drop n'm' = nm == n'm'
+  _ == _ = False
+
+deriving instance Show (n :<= m)
+
 instance NFData (n :<= m) where
   rnf :: n :<= m -> ()
   rnf Done = ()
