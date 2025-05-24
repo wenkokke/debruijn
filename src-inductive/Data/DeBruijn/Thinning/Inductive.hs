@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -47,6 +48,14 @@ data (:<=) n m where
   Keep :: n :<= m -> S n :<= S m
   Drop :: n :<= m -> n :<= S m
 
+instance Eq (n :<= m) where
+  Done == Done = True
+  Keep nm == Keep n'm' = nm == n'm'
+  Drop nm == Drop n'm' = nm == n'm'
+  _ == _ = False
+
+deriving instance Show (n :<= m)
+
 instance NFData (n :<= m) where
   rnf :: n :<= m -> ()
   rnf Done = ()
@@ -79,8 +88,8 @@ dropAll (S n) = Drop (dropAll n)
 toBools :: n :<= m -> [Bool]
 toBools = \case
   Done -> []
-  Keep n'm' -> True : toBools n'm'
-  Drop nm' -> False : toBools nm'
+  Keep n'm' -> False : toBools n'm'
+  Drop nm' -> True : toBools nm'
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -97,6 +106,8 @@ data SomeTh
 instance NFData SomeTh where
   rnf :: SomeTh -> ()
   rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
+
+deriving stock instance Show SomeTh
 
 emptySomeTh :: SomeTh
 emptySomeTh =

@@ -82,15 +82,15 @@ unKeepDropRep th =
           , bits = clearBit th.bits size'
           }
 
-elThRep :: ThRep -> a -> (ThRep -> a) -> (ThRep -> a) -> a
-elThRep th ifDone ifKeep ifDrop =
+recThRep :: ThRep -> a -> (ThRep -> a) -> (ThRep -> a) -> a
+recThRep th ifDone ifKeep ifDrop =
   assert (isValidThRep th && th /= mkDoneRep) $
     if th.size == 0
       then ifDone
       else
         if testBit th.bits (pred th.size)
-          then ifKeep (unKeepDropRep th)
-          else ifDrop (unKeepDropRep th)
+          then ifDrop (unKeepDropRep th)
+          else ifKeep (unKeepDropRep th)
 
 thinThRep :: ThRep -> ThRep -> ThRep
 thinThRep th1 th2 =
@@ -101,7 +101,7 @@ thinThRep th1 th2 =
       }
 
 toBoolsThRep :: ThRep -> [Bool]
-toBoolsThRep th = testBit th.bits <$> [0 .. th.size - 1]
+toBoolsThRep th = testBit th.bits <$> [th.size - 1, th.size - 2 .. 0]
 
 _fromBoolsThRep :: [Bool] -> ThRep
 _fromBoolsThRep th =
@@ -136,7 +136,7 @@ mkDrop = UnsafeTh . mkDropRep . (.thRep)
 {-# INLINE mkDrop #-}
 
 recTh :: n :<= m -> a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> a
-recTh nm ifDone ifKeep ifDrop = elThRep nm.thRep ifDone (ifKeep . UnsafeTh) (ifDrop . UnsafeTh)
+recTh nm ifDone ifKeep ifDrop = recThRep nm.thRep ifDone (ifKeep . UnsafeTh) (ifDrop . UnsafeTh)
 {-# INLINE recTh #-}
 
 data ThF (th :: Nat -> Nat -> Type) (n :: Nat) (m :: Nat) where
