@@ -4,7 +4,7 @@
 
 module Data.DeBruijn.Thinning.Inductive (
   -- * Thinnings
-  (:<=) (Done, Keep, Drop),
+  (:<=) (Refl, Keep, Drop),
   toInductive,
   fromInductive,
   keepAll,
@@ -40,47 +40,66 @@ import Data.Type.Nat.Singleton.Inductive (SNat (..))
 -- @
 -- instead of @Done@.
 
+-- TODO:
+-- This does not work, because it stores superfluous information, i.e., we're not
+-- supposed to be able to tell the difference between @Refl@ and @Keep Refl@.
+
 -- | @n ':<=' m@ is the type of thinnings from @m@ to @n@.
 type (:<=) :: Nat -> Nat -> Type
 data (:<=) n m where
-  Done :: Z :<= Z
+  Refl :: n :<= n
   Keep :: n :<= m -> S n :<= S m
   Drop :: n :<= m -> n :<= S m
 
+instance Eq (n :<= m) where
+  (==) :: (n :<= m) -> (n :<= m) -> Bool
+  Refl == Refl = True
+  Keep nm == Keep n'm' = nm == n'm'
+  Drop nm == Drop n'm' = nm == n'm'
+  _ == _ = False
+
+deriving instance Show (n :<= m)
+
 instance NFData (n :<= m) where
   rnf :: n :<= m -> ()
-  rnf Done = ()
+  rnf Refl = ()
   rnf (Keep n'm') = rnf n'm'
   rnf (Drop nm') = rnf nm'
 
 -- | Convert from the efficient representation 'Unsafe.:<=' to the inductive representation ':<='.
 toInductive :: n Unsafe.:<= m -> n :<= m
-toInductive Unsafe.Done = Done
-toInductive (Unsafe.Keep n'm') = Keep (toInductive n'm')
-toInductive (Unsafe.Drop nm') = Drop (toInductive nm')
+toInductive = undefined
+
+-- toInductive Unsafe.Refl = Refl
+-- toInductive (Unsafe.Keep n'm') = Keep (toInductive n'm')
+-- toInductive (Unsafe.Drop nm') = Drop (toInductive nm')
 
 -- | Convert from the inductive representation ':<=' to the efficient representation 'Unsafe.:<='.
 fromInductive :: n :<= m -> n Unsafe.:<= m
-fromInductive Done = Unsafe.Done
-fromInductive (Keep n'm') = Unsafe.Keep (fromInductive n'm')
-fromInductive (Drop nm') = Unsafe.Drop (fromInductive nm')
+fromInductive = undefined
+
+-- fromInductive Done = Unsafe.Done
+-- fromInductive (Keep n'm') = Unsafe.Keep (fromInductive n'm')
+-- fromInductive (Drop nm') = Unsafe.Drop (fromInductive nm')
 
 -- | The reflexive thinning.
 keepAll :: SNat n -> n :<= n
-keepAll Z = Done
-keepAll (S n) = Keep (keepAll n)
+keepAll _ = Refl
+
+-- keepAll Z = Done
+-- keepAll (S n) = Keep (keepAll n)
 
 -- | The thinning that drops all elements.
 dropAll :: SNat n -> Z :<= n
-dropAll Z = Done
+dropAll Z = Refl
 dropAll (S n) = Drop (dropAll n)
 
 -- | Convert a thinning into a list of booleans.
 toBools :: n :<= m -> [Bool]
 toBools = \case
-  Done -> []
-  Keep n'm' -> True : toBools n'm'
-  Drop nm' -> False : toBools nm'
+  Refl -> []
+  Keep n'm' -> False : toBools n'm'
+  Drop nm' -> True : toBools nm'
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -103,7 +122,7 @@ emptySomeTh =
   SomeTh
     { lower = Z
     , upper = Z
-    , value = Done
+    , value = Refl
     }
 
 keepSomeTh :: SomeTh -> SomeTh
@@ -148,6 +167,7 @@ instance Thin Ix where
   thin :: n :<= m -> Ix n -> Ix m
   thin !t !i = isPos i $
     case t of
+      Refl -> i
       Keep n'm' ->
         case i of
           FZ -> FZ
@@ -155,7 +175,7 @@ instance Thin Ix where
       Drop nm' -> FS (thin nm' i)
 
   thick :: n :<= m -> Ix m -> Maybe (Ix n)
-  thick Done _i = Nothing
+  thick Refl i = Just i
   thick (Keep _n'm') FZ = Just FZ
   thick (Keep n'm') (FS i') = FS <$> thick n'm' i'
   thick (Drop _nm') FZ = Nothing
@@ -163,14 +183,17 @@ instance Thin Ix where
 
 instance Thin ((:<=) l) where
   thin :: n :<= m -> l :<= n -> l :<= m
-  thin Done Done = Done
+  thin nm Refl = nm
+  thin Refl ln = ln
   thin (Keep n'm') (Keep l'n') = Keep (thin n'm' l'n')
   thin (Keep n'm') (Drop ln') = Drop (thin n'm' ln')
   thin (Drop nm') ln = Drop (thin nm' ln)
 
   thick :: n :<= m -> l :<= m -> Maybe (l :<= n)
-  thick Done Done = Just Done
+  thick Refl lm = Just lm
+  thick (Keep n'm') Refl = Keep <$> thick n'm' Refl
   thick (Keep n'm') (Keep l'n') = Keep <$> thick n'm' l'n'
   thick (Keep n'm') (Drop ln') = Drop <$> thick n'm' ln'
+  thick (Drop _nm') Refl = Nothing
   thick (Drop _nm') (Keep _l'n') = Nothing
   thick (Drop nm') (Drop ln') = thick nm' ln'

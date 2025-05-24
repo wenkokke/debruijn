@@ -9,7 +9,7 @@
 
 module Data.DeBruijn.Thinning.Unsafe (
   -- * Thinnings
-  (:<=) (Done, Keep, Drop),
+  (:<=) (Refl, Keep, Drop),
   keepAll,
   dropAll,
   toBools,
@@ -40,50 +40,24 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-data ThRep = ThRep
-  { size :: {-# UNPACK #-} !Int
-  , bits :: {-# UNPACK #-} !Integer
-  }
-  deriving (Eq, Show)
+#define ThRep Integer
 
-isValidThRep :: ThRep -> Bool
-isValidThRep th =
-  th.size >= popCount th.bits
-
-mkDoneRep :: ThRep
-mkDoneRep =
-  ThRep
-    { size = 0
-    , bits = zeroBits
-    }
+mkReflRep :: ThRep
+mkReflRep = zeroBits
 
 mkKeepRep :: ThRep -> ThRep
-mkKeepRep th =
-  assert (isValidThRep th) $
-    ThRep
-      { size = 1 + th.size
-      , bits = th.bits
-      }
+mkKeepRep = (`shift` 1)
 
 mkDropRep :: ThRep -> ThRep
-mkDropRep th =
-  assert (isValidThRep th) $
-    ThRep
-      { size = 1 + th.size
-      , bits = setBit th.bits th.size
-      }
+mkDropRep = (`setBit` 0) . (`shift` 1)
 
 unKeepDropRep :: ThRep -> ThRep
-unKeepDropRep th =
-  assert (isValidThRep th && th /= mkDoneRep) $
-    let size' = pred th.size
-    in  ThRep
-          { size = size'
-          , bits = clearBit th.bits size'
-          }
+unKeepDropRep = (`shift` -1)
 
-elThRep :: ThRep -> a -> (ThRep -> a) -> (ThRep -> a) -> a
-elThRep th ifDone ifKeep ifDrop =
+recThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+recThRep ifDone ifKeep ifDrop th =
+  if th == zeroBits
+    then ifRefl
   assert (isValidThRep th && th /= mkDoneRep) $
     if th.size == 0
       then ifDone
@@ -136,7 +110,7 @@ mkDrop = UnsafeTh . mkDropRep . (.thRep)
 {-# INLINE mkDrop #-}
 
 recTh :: n :<= m -> a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> a
-recTh nm ifDone ifKeep ifDrop = elThRep nm.thRep ifDone (ifKeep . UnsafeTh) (ifDrop . UnsafeTh)
+recTh nm ifDone ifKeep ifDrop = recThRep nm.thRep ifDone (ifKeep . UnsafeTh) (ifDrop . UnsafeTh)
 {-# INLINE recTh #-}
 
 data ThF (th :: Nat -> Nat -> Type) (n :: Nat) (m :: Nat) where
