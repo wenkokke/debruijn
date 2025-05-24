@@ -4,7 +4,6 @@
 module Test.Data.DeBruijn.Index (tests) where
 
 import Data.Data (type (:~:) (Refl))
-import Data.DeBruijn.Index.Inductive (SomeIx (bound, index))
 import Data.DeBruijn.Index.Inductive qualified as Inductive
 import Data.DeBruijn.Index.Inductive qualified as Unsafe (fromInductive, toInductive)
 import Data.DeBruijn.Index.Inductive.Arbitrary ()
@@ -14,7 +13,8 @@ import Data.Type.Nat.Singleton.Inductive (SNat (..))
 import Data.Type.Nat.Singleton.Inductive qualified as Inductive (SomeSNat (..), decSNat)
 import Data.Type.Nat.Singleton.Inductive.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (NonNegative (..), Positive (..), testProperty)
+import Test.Tasty.QuickCheck (NonNegative (..), Positive (..), Property, counterexample, once, testProperty)
+import Text.Printf (printf)
 
 tests :: TestTree
 tests =
@@ -31,53 +31,75 @@ tests =
     , testProperty "test_thickEq" test_thickEq
     ]
 
-test_zeroIx :: Bool
+test_zeroIx :: Property
 test_zeroIx =
-  Inductive.FZ == Unsafe.toInductive Unsafe.FZ
+  once $
+    Inductive.FZ == Unsafe.toInductive Unsafe.FZ
 
-test_succIx :: Inductive.SomeIx -> Bool
-test_succIx (Inductive.SomeIx _n i) =
-  Inductive.FS i == Unsafe.toInductive (Unsafe.FS (Unsafe.fromInductive i))
+test_succIx :: Inductive.SomeIx -> Property
+test_succIx (Inductive.SomeIx _ i) = do
+  let expect = Inductive.FS i
+  let actual = Unsafe.toInductive (Unsafe.FS (Unsafe.fromInductive i))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
 test_caseIx :: Inductive.SomeIx -> Bool
-test_caseIx (Inductive.SomeIx _n i) =
+test_caseIx (Inductive.SomeIx _ i) =
   case (i, Unsafe.fromInductive i) of
     (Inductive.FZ, Unsafe.FZ) -> True
     (Inductive.FS i', Unsafe.FS j') -> i' == Unsafe.toInductive j'
     _ -> False
 
-test_eqIxEq :: Inductive.SomeIx -> Inductive.SomeIx -> Bool
-test_eqIxEq (Inductive.SomeIx{index = i, bound = _}) (Inductive.SomeIx{index = j, bound = _}) =
-  Inductive.eqIx i j == Unsafe.eqIx (Unsafe.fromInductive i) (Unsafe.fromInductive j)
+test_eqIxEq :: Inductive.SomeIx -> Inductive.SomeIx -> Property
+test_eqIxEq (Inductive.SomeIx _ i) (Inductive.SomeIx _ j) = do
+  let expect = Inductive.eqIx i j
+  let actual = Unsafe.eqIx (Unsafe.fromInductive i) (Unsafe.fromInductive j)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
-test_fromIxRawEq :: Inductive.SomeIx -> Bool
-test_fromIxRawEq (Inductive.SomeIx{index = i, bound = _}) =
-  Inductive.fromIxRaw i == Unsafe.fromIxRaw (Unsafe.fromInductive i)
+test_fromIxRawEq :: Inductive.SomeIx -> Property
+test_fromIxRawEq (Inductive.SomeIx _ i) = do
+  let expect = Inductive.fromIxRaw i
+  let actual = Unsafe.fromIxRaw (Unsafe.fromInductive i)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
-test_fromIxEq :: Inductive.SomeIx -> Bool
-test_fromIxEq (Inductive.SomeIx{index = i, bound = _}) =
-  Inductive.fromIx @Int i == Unsafe.fromIx @Int (Unsafe.fromInductive i)
+test_fromIxEq :: Inductive.SomeIx -> Property
+test_fromIxEq (Inductive.SomeIx _ i) = do
+  let expect = Inductive.fromIx @Int i
+  let actual = Unsafe.fromIx @Int (Unsafe.fromInductive i)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
-test_injectEq :: Inductive.SomeSNat -> Inductive.SomeIx -> Bool
-test_injectEq (Inductive.SomeSNat n) (Inductive.SomeIx{index = i, bound = _}) =
-  Inductive.inject n i == Unsafe.toInductive (Unsafe.inject (erase n) (Unsafe.fromInductive i))
+test_injectEq :: Inductive.SomeSNat -> Inductive.SomeIx -> Property
+test_injectEq (Inductive.SomeSNat n) (Inductive.SomeIx _ i) = do
+  let expect = Inductive.inject n i
+  let actual = Unsafe.toInductive (Unsafe.inject (erase n) (Unsafe.fromInductive i))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
-test_thinEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Bool
+test_thinEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
 test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
   , Inductive.SomeIx (S n) i <- Inductive.toSomeIxRaw (nRaw + 1, iRaw)
   , Inductive.SomeIx n' j <- Inductive.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Inductive.decSNat n n' =
-      Inductive.thin i j == Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+  , Just Refl <- Inductive.decSNat n n' = do
+      let expect = Inductive.thin i j
+      let actual = Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+      counterexample (printf "%s == %s" (show expect) (show actual)) $
+        expect == actual
   | otherwise = error "test_thinEq: could not construct test"
 
-test_thickEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Bool
+test_thickEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
 test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
   , Inductive.SomeIx (S n) i <- Inductive.toSomeIxRaw (nRaw, iRaw)
   , Inductive.SomeIx (S n') j <- Inductive.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Inductive.decSNat n n' =
-      Inductive.thick i j == (Unsafe.toInductive <$> Unsafe.thick (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+  , Just Refl <- Inductive.decSNat n n' = do
+      let expect = Inductive.thick i j
+      let actual = Unsafe.toInductive <$> Unsafe.thick (Unsafe.fromInductive i) (Unsafe.fromInductive j)
+      counterexample (printf "%s == %s" (show expect) (show actual)) $
+        expect == actual
   | otherwise = error "test_thinEq: could not construct test"
 
 --------------------------------------------------------------------------------

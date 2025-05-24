@@ -5,7 +5,7 @@ module STLC where
 
 -- import Data.DeBruijn.Environment (Env, (!))
 import Data.DeBruijn.Index (Ix)
-import Data.DeBruijn.Thinning (type (:<=) (..), Thin (..))
+import Data.DeBruijn.Thinning (Thin (..), type (:<=) (..))
 import Data.Kind (Type)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton ()
