@@ -23,10 +23,9 @@ tests :: TestTree
 tests =
   testGroup
     "Test.Data.DeBruijn.Thinning"
-    [ testProperty "test_doneTh" test_doneTh
-    , testProperty "test_keepTh" test_keepTh
-    , testProperty "test_dropTh" test_dropTh
-    , testProperty "test_keepAllEq" test_keepAllEq
+    [ testProperty "test_KeepAllTh" test_KeepAllTh
+    , testProperty "test_KeepOneTh" test_KeepOneTh
+    , testProperty "test_DropOneTh" test_DropOneTh
     , testProperty "test_dropAllEq" test_dropAllEq
     , testProperty "test_toBoolsEq" test_toBoolsEq
     , testProperty "test_thinIxEq" test_thinIxEq
@@ -34,29 +33,22 @@ tests =
     , testProperty "test_thinThEq" test_thinThEq
     ]
 
-test_doneTh :: Property
-test_doneTh =
+test_KeepAllTh :: Property
+test_KeepAllTh =
   once $
-    Inductive.Done == Unsafe.toInductive Unsafe.Done
+    Inductive.KeepAll == Unsafe.toInductive Unsafe.KeepAll
 
-test_keepTh :: Inductive.SomeTh -> Property
-test_keepTh (Inductive.SomeTh _n _m nm) = do
-  let expect = Inductive.Keep nm
-  let actual = Unsafe.toInductive (Unsafe.Keep (Unsafe.fromInductive nm))
+test_KeepOneTh :: Inductive.SomeTh -> Property
+test_KeepOneTh (Inductive.SomeTh _n _m nm) = do
+  let expect = Inductive.KeepOne nm
+  let actual = Unsafe.toInductive (Unsafe.KeepOne (Unsafe.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_dropTh :: Inductive.SomeTh -> Property
-test_dropTh (Inductive.SomeTh _n _m nm) = do
-  let expect = Inductive.Drop nm
-  let actual = Unsafe.toInductive (Unsafe.Drop (Unsafe.fromInductive nm))
-  counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
-
-test_keepAllEq :: Inductive.SomeSNat -> Property
-test_keepAllEq (Inductive.SomeSNat n) = do
-  let expect = Inductive.keepAll n
-  let actual = Unsafe.toInductive (Unsafe.keepAll (Unsafe.SNat.fromInductive n))
+test_DropOneTh :: Inductive.SomeTh -> Property
+test_DropOneTh (Inductive.SomeTh _n _m nm) = do
+  let expect = Inductive.DropOne nm
+  let actual = Unsafe.toInductive (Unsafe.DropOne (Unsafe.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 

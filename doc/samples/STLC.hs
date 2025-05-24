@@ -20,13 +20,13 @@ instance Thin Tm where
   thin :: n :<= m -> Tm n -> Tm m
   thin nm = \case
     Var ix -> Var (thin nm ix)
-    Lam body -> Lam (thin (Keep nm) body)
+    Lam body -> Lam (thin (KeepOne nm) body)
     App fun arg -> App (thin nm fun) (thin nm arg)
 
   thick :: n :<= m -> Tm m -> Maybe (Tm n)
   thick nm = \case
     Var ix -> Var <$> thick nm ix
-    Lam body -> Lam <$> thick (Keep nm) body
+    Lam body -> Lam <$> thick (KeepOne nm) body
     App fun arg -> App <$> thick nm fun <*> thick nm arg
 
 -- exts :: Env n (Tm m) -> Env (S n) (Tm (S m))

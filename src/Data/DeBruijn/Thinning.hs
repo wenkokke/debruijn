@@ -1,17 +1,28 @@
 {-# LANGUAGE ExplicitNamespaces #-}
 
 module Data.DeBruijn.Thinning (
-  (:<=) (Done, Keep, Drop),
-  keepAll,
+  -- * Thinnings
+  (:<=) (KeepAll, KeepOne, DropOne),
   dropAll,
   toBools,
+
+  -- * Existential Wrapper
+  SomeTh (..),
+  fromBools,
+  fromBits,
+  fromBitsRaw,
+
+  -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
 ) where
 
 import Data.DeBruijn.Thinning.Unsafe (
+  SomeTh (..),
   Thin (..),
   dropAll,
-  keepAll,
+  fromBits,
+  fromBitsRaw,
+  fromBools,
   toBools,
-  type (:<=) (Done, Drop, Keep),
+  (:<=) (DropOne, KeepAll, KeepOne),
  )
