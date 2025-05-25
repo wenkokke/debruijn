@@ -6,12 +6,14 @@ module Data.DeBruijn.Thinning (
   (:<=) (KeepAll, KeepOne, DropOne),
   dropAll,
   toBools,
+  fromTh,
+  fromThRaw,
 
   -- * Existential Wrapper
   SomeTh (..),
   fromBools,
-  fromBits,
-  fromBitsRaw,
+  toSomeTh,
+  toSomeThRaw,
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
@@ -22,10 +24,12 @@ import Data.DeBruijn.Thinning.Safe (
   SomeTh (..),
   Thin (..),
   dropAll,
-  fromBits,
-  fromBitsRaw,
+  toSomeTh,
+  toSomeThRaw,
   fromBools,
   toBools,
+  fromTh,
+  fromThRaw,
   (:<=) (DropOne, KeepAll, KeepOne),
  )
 #else
@@ -33,10 +37,12 @@ import Data.DeBruijn.Thinning.Fast (
   SomeTh (..),
   Thin (..),
   dropAll,
-  fromBits,
-  fromBitsRaw,
+  toSomeTh,
+  toSomeThRaw,
   fromBools,
   toBools,
+  fromTh,
+  fromThRaw,
   (:<=) (DropOne, KeepAll, KeepOne),
  )
 #endif

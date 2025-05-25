@@ -11,12 +11,16 @@ module Data.DeBruijn.Thinning.Safe (
   fromInductive,
   dropAll,
   toBools,
+  fromTh,
+  fromThRaw,
 
   -- * Existential Wrapper
   SomeTh (..),
   fromBools,
-  fromBits,
-  fromBitsRaw,
+  toSomeTh,
+  toSomeThRaw,
+  fromSomeTh,
+  fromSomeThRaw,
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
@@ -96,6 +100,17 @@ toBools = \case
   KeepOne n'm' -> False : toBools n'm'
   DropOne nm' -> True : toBools nm'
 
+-- | Convert a thinning into a bit sequence.
+fromTh :: (Bits bs) => n :<= m -> bs
+fromTh = \case
+  KeepAll -> zeroBits
+  KeepOne n'm' -> (`shift` 1) . fromTh $ n'm'
+  DropOne nm' -> (`setBit` 0) . (`shift` 1) . fromTh $ nm'
+{-# SPECIALIZE fromTh :: n :<= m -> Integer #-}
+
+fromThRaw :: n :<= m -> Integer
+fromThRaw = fromTh
+
 --------------------------------------------------------------------------------
 -- Existential Wrapper
 --------------------------------------------------------------------------------
@@ -145,17 +160,26 @@ fromBools bound = go
   go (False : bools) = keepOneSomeTh (go bools)
   go (True : bools) = dropOneSomeTh (go bools)
 
-fromBits :: (Bits bs) => SomeSNat -> bs -> SomeTh
-fromBits bound = go
+toSomeTh :: (Bits bs) => SomeSNat -> bs -> SomeTh
+toSomeTh bound = go
  where
   go bits
     | bits == zeroBits = keepAllSomeTh bound
     | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
     | otherwise = keepOneSomeTh (go (shift bits (-1)))
-{-# SPECIALIZE fromBits :: SomeSNat -> Integer -> SomeTh #-}
+{-# SPECIALIZE toSomeTh :: SomeSNat -> Integer -> SomeTh #-}
 
-fromBitsRaw :: SomeSNat -> Integer -> SomeTh
-fromBitsRaw = fromBits
+toSomeThRaw :: SomeSNat -> Integer -> SomeTh
+toSomeThRaw = toSomeTh
+
+withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
+withSomeTh action (SomeTh n m nm) = action n m nm
+
+fromSomeTh :: (Bits bs) => SomeTh -> bs
+fromSomeTh = withSomeTh (\_ _ -> fromTh)
+
+fromSomeThRaw :: SomeTh -> Integer
+fromSomeThRaw = withSomeTh (\_ _ -> fromThRaw)
 
 --------------------------------------------------------------------------------
 -- Thinning Class

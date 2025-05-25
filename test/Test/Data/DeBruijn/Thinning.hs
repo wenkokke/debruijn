@@ -126,3 +126,8 @@ test_thinThEq (SomeThinThArgs nm ln) = do
 -- This test is incredibly annoying to write, because its inputs are two
 -- thinnings @n :< m@ and @l :< m@, which cannot be obtained with the current
 -- operations on type-level natural numbers.
+
+-- TODO: test_fromTh
+-- TODO: test_fromThRaw
+-- TODO: test_toSomeTh
+-- TODO: test_toSomeThRaw

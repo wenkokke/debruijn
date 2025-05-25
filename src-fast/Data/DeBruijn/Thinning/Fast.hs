@@ -14,12 +14,16 @@ module Data.DeBruijn.Thinning.Fast (
   (:<=) (KeepAll, KeepOne, DropOne),
   dropAll,
   toBools,
+  fromTh,
+  fromThRaw,
 
   -- * Existential Wrapper
   SomeTh (..),
   fromBools,
-  fromBits,
-  fromBitsRaw,
+  toSomeTh,
+  toSomeThRaw,
+  fromSomeTh,
+  fromSomeThRaw,
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
@@ -139,6 +143,17 @@ toBools = \case
   KeepOne n'm' -> False : toBools n'm'
   DropOne nm' -> True : toBools nm'
 
+-- | Convert a thinning into a bit sequence.
+fromTh :: (Bits bs) => n :<= m -> bs
+fromTh = \case
+  KeepAll -> zeroBits
+  KeepOne n'm' -> (`shift` 1) . fromTh $ n'm'
+  DropOne nm' -> (`setBit` 0) . (`shift` 1) . fromTh $ nm'
+{-# SPECIALIZE fromTh :: n :<= m -> ThRep #-}
+
+fromThRaw :: n :<= m -> ThRep
+fromThRaw = (.thRep)
+
 --------------------------------------------------------------------------------
 -- Existential Wrapper
 --------------------------------------------------------------------------------
@@ -187,23 +202,37 @@ fromBools bound = go
   go (True : bools) = dropOneSomeTh (go bools)
 {-# SPECIALIZE fromBools :: SNatRep -> [Bool] -> SomeTh #-}
 
-fromBits :: (Integral i, Bits bs) => i -> bs -> SomeTh
-fromBits bound = go
- where
-  go bits
-    | bits == zeroBits = keepAllSomeTh (toSomeSNat bound)
-    | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
-    | otherwise = keepOneSomeTh (go (shift bits (-1)))
-{-# SPECIALIZE fromBits :: SNatRep -> ThRep -> SomeTh #-}
+toSomeTh :: (Integral i, Bits bs) => i -> bs -> SomeTh
+toSomeTh nRep thRep = toSomeThRaw (fromIntegral nRep) (copyBits thRep)
+{-# SPECIALIZE toSomeTh :: SNatRep -> ThRep -> SomeTh #-}
 
-fromBitsRaw :: SNatRep -> ThRep -> SomeTh
-fromBitsRaw nRep thRep
+toSomeThRaw :: SNatRep -> ThRep -> SomeTh
+toSomeThRaw nRep thRep
   | SomeSNat n <- toSomeSNatRaw nRep
   , let dRep = popCount thRep
   , SomeSNat d <- toSomeSNatRaw dRep
   , let m = n `plus` d
   , let nm = UnsafeTh thRep =
       SomeTh n m nm
+
+withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
+withSomeTh action (SomeTh n m nm) = action n m nm
+
+-- | Convert a thinning into a bit sequence.
+fromSomeTh :: (Bits bs) => SomeTh -> bs
+fromSomeTh = copyBits . fromSomeThRaw
+
+fromSomeThRaw :: SomeTh -> ThRep
+fromSomeThRaw = withSomeTh (\_ _ -> (.thRep))
+
+copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
+copyBits = go 0 zeroBits
+ where
+  go :: Int -> bs2 -> bs1 -> bs2
+  go i bs2 bs1
+    | bs1 == zeroBits = bs2
+    | testBit bs1 0 = go (i + 1) (setBit bs2 i) (shift bs1 (-1))
+    | otherwise = go (i + 1) bs2 (shift bs1 (-1))
 
 --------------------------------------------------------------------------------
 -- Thinning Class

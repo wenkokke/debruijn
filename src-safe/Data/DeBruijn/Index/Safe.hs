@@ -137,10 +137,6 @@ data SomeIx = forall (n :: Nat). SomeIx
   , index :: !(Ix n)
   }
 
-instance NFData SomeIx where
-  rnf :: SomeIx -> ()
-  rnf SomeIx{..} = rnf bound `seq` rnf index
-
 instance Eq SomeIx where
   (==) :: SomeIx -> SomeIx -> Bool
   SomeIx n i == SomeIx m j
@@ -148,6 +144,10 @@ instance Eq SomeIx where
     | otherwise = False
 
 deriving instance Show SomeIx
+
+instance NFData SomeIx where
+  rnf :: SomeIx -> ()
+  rnf SomeIx{..} = rnf bound `seq` rnf index
 
 withSomeIx :: (forall n. SNat n -> Ix n -> a) -> SomeIx -> a
 withSomeIx action (SomeIx n i) = action n i
