@@ -14,7 +14,7 @@ module Data.Type.Nat.Singleton (
   fromSomeSNatRaw,
 ) where
 
-import Data.Type.Nat.Singleton.Unsafe (
+import Data.Type.Nat.Singleton.Fast (
   SNat (S, Z),
   SomeSNat (..),
   decSNat,

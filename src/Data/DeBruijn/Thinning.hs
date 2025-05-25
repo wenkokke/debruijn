@@ -16,7 +16,7 @@ module Data.DeBruijn.Thinning (
   Thin (..),
 ) where
 
-import Data.DeBruijn.Thinning.Unsafe (
+import Data.DeBruijn.Thinning.Fast (
   SomeTh (..),
   Thin (..),
   dropAll,

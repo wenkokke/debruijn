@@ -5,16 +5,16 @@ module Test.Data.DeBruijn.Thinning (
   tests,
 ) where
 
-import Data.DeBruijn.Index.Inductive qualified as Inductive (Ix)
-import Data.DeBruijn.Index.Inductive qualified as Unsafe.Ix (fromInductive, toInductive)
-import Data.DeBruijn.Index.Inductive.Arbitrary qualified as Inductive (arbitraryIx)
-import Data.DeBruijn.Thinning.Inductive qualified as Inductive
-import Data.DeBruijn.Thinning.Inductive qualified as Unsafe (fromInductive, toInductive)
-import Data.DeBruijn.Thinning.Inductive.Arbitrary ()
-import Data.DeBruijn.Thinning.Inductive.Arbitrary qualified as Inductive
-import Data.DeBruijn.Thinning.Unsafe qualified as Unsafe
-import Data.Type.Nat.Singleton.Inductive qualified as Inductive (SNat (..), SomeSNat (..), plus)
-import Data.Type.Nat.Singleton.Inductive qualified as Unsafe.SNat (fromInductive)
+import Data.DeBruijn.Index.Safe qualified as Fast.Ix (fromInductive, toInductive)
+import Data.DeBruijn.Index.Safe qualified as Safe (Ix)
+import Data.DeBruijn.Index.Safe.Arbitrary qualified as Safe (arbitraryIx)
+import Data.DeBruijn.Thinning.Fast qualified as Fast
+import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive)
+import Data.DeBruijn.Thinning.Safe qualified as Safe
+import Data.DeBruijn.Thinning.Safe.Arbitrary ()
+import Data.DeBruijn.Thinning.Safe.Arbitrary qualified as Safe
+import Data.Type.Nat.Singleton.Safe qualified as Fast.SNat (fromInductive)
+import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), plus)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Arbitrary (..), Gen, Property, counterexample, once, testProperty)
 import Text.Printf (printf)
@@ -36,89 +36,89 @@ tests =
 test_KeepAllTh :: Property
 test_KeepAllTh =
   once $
-    Inductive.KeepAll == Unsafe.toInductive Unsafe.KeepAll
+    Safe.KeepAll == Fast.toInductive Fast.KeepAll
 
-test_KeepOneTh :: Inductive.SomeTh -> Property
-test_KeepOneTh (Inductive.SomeTh _n _m nm) = do
-  let expect = Inductive.KeepOne nm
-  let actual = Unsafe.toInductive (Unsafe.KeepOne (Unsafe.fromInductive nm))
+test_KeepOneTh :: Safe.SomeTh -> Property
+test_KeepOneTh (Safe.SomeTh _n _m nm) = do
+  let expect = Safe.KeepOne nm
+  let actual = Fast.toInductive (Fast.KeepOne (Fast.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_DropOneTh :: Inductive.SomeTh -> Property
-test_DropOneTh (Inductive.SomeTh _n _m nm) = do
-  let expect = Inductive.DropOne nm
-  let actual = Unsafe.toInductive (Unsafe.DropOne (Unsafe.fromInductive nm))
+test_DropOneTh :: Safe.SomeTh -> Property
+test_DropOneTh (Safe.SomeTh _n _m nm) = do
+  let expect = Safe.DropOne nm
+  let actual = Fast.toInductive (Fast.DropOne (Fast.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_dropAllEq :: Inductive.SomeSNat -> Property
-test_dropAllEq (Inductive.SomeSNat n) = do
-  let expect = Inductive.dropAll n
-  let actual = Unsafe.toInductive (Unsafe.dropAll (Unsafe.SNat.fromInductive n))
+test_dropAllEq :: Safe.SomeSNat -> Property
+test_dropAllEq (Safe.SomeSNat n) = do
+  let expect = Safe.dropAll n
+  let actual = Fast.toInductive (Fast.dropAll (Fast.SNat.fromInductive n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_toBoolsEq :: Inductive.SomeTh -> Property
-test_toBoolsEq (Inductive.SomeTh _n _m nm) = do
-  let expect = Inductive.toBools nm
-  let actual = Unsafe.toBools (Unsafe.fromInductive nm)
+test_toBoolsEq :: Safe.SomeTh -> Property
+test_toBoolsEq (Safe.SomeTh _n _m nm) = do
+  let expect = Safe.toBools nm
+  let actual = Fast.toBools (Fast.fromInductive nm)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-data SomeThinIxArgs = forall n m. SomeThinIxArgs (n Inductive.:<= m) (Inductive.Ix n)
+data SomeThinIxArgs = forall n m. SomeThinIxArgs (n Safe.:<= m) (Safe.Ix n)
 
 deriving stock instance Show SomeThinIxArgs
 
 instance Arbitrary SomeThinIxArgs where
   arbitrary :: Gen SomeThinIxArgs
   arbitrary = do
-    Inductive.SomeSNat n <- arbitrary
-    Inductive.SomeSNat m <- arbitrary
-    SomeThinIxArgs <$> Inductive.arbitraryTh (Inductive.S n) m <*> Inductive.arbitraryIx (Inductive.S n)
+    Safe.SomeSNat n <- arbitrary
+    Safe.SomeSNat m <- arbitrary
+    SomeThinIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S n)
 
 test_thinIxEq :: SomeThinIxArgs -> Property
 test_thinIxEq (SomeThinIxArgs nm i) = do
-  let expect = Inductive.thin nm i
-  let actual = Unsafe.Ix.toInductive (Unsafe.thin (Unsafe.fromInductive nm) (Unsafe.Ix.fromInductive i))
+  let expect = Safe.thin nm i
+  let actual = Fast.Ix.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.Ix.fromInductive i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-data SomeThickIxArgs = forall n m. SomeThickIxArgs (n Inductive.:<= m) (Inductive.Ix m)
+data SomeThickIxArgs = forall n m. SomeThickIxArgs (n Safe.:<= m) (Safe.Ix m)
 
 deriving stock instance Show SomeThickIxArgs
 
 instance Arbitrary SomeThickIxArgs where
   arbitrary :: Gen SomeThickIxArgs
   arbitrary = do
-    Inductive.SomeSNat n <- arbitrary
-    Inductive.SomeSNat m <- arbitrary
-    SomeThickIxArgs <$> Inductive.arbitraryTh (Inductive.S n) m <*> Inductive.arbitraryIx (Inductive.S (n `Inductive.plus` m))
+    Safe.SomeSNat n <- arbitrary
+    Safe.SomeSNat m <- arbitrary
+    SomeThickIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S (n `Safe.plus` m))
 
 test_thickIxEq :: SomeThickIxArgs -> Property
 test_thickIxEq (SomeThickIxArgs nm i) = do
-  let expect = Inductive.thick nm i
-  let actual = Unsafe.Ix.toInductive <$> Unsafe.thick (Unsafe.fromInductive nm) (Unsafe.Ix.fromInductive i)
+  let expect = Safe.thick nm i
+  let actual = Fast.Ix.toInductive <$> Fast.thick (Fast.fromInductive nm) (Fast.Ix.fromInductive i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-data SomeThinThArgs = forall l n m. SomeThinThArgs (n Inductive.:<= m) (l Inductive.:<= n)
+data SomeThinThArgs = forall l n m. SomeThinThArgs (n Safe.:<= m) (l Safe.:<= n)
 
 deriving stock instance Show SomeThinThArgs
 
 instance Arbitrary SomeThinThArgs where
   arbitrary :: Gen SomeThinThArgs
   arbitrary = do
-    Inductive.SomeSNat l <- arbitrary
-    Inductive.SomeSNat dn <- arbitrary
-    let n = l `Inductive.plus` dn
-    Inductive.SomeSNat dm <- arbitrary
-    SomeThinThArgs <$> Inductive.arbitraryTh n dm <*> Inductive.arbitraryTh l dn
+    Safe.SomeSNat l <- arbitrary
+    Safe.SomeSNat dn <- arbitrary
+    let n = l `Safe.plus` dn
+    Safe.SomeSNat dm <- arbitrary
+    SomeThinThArgs <$> Safe.arbitraryTh n dm <*> Safe.arbitraryTh l dn
 
 test_thinThEq :: SomeThinThArgs -> Property
 test_thinThEq (SomeThinThArgs nm ln) = do
-  let expect = Inductive.thin nm ln
-  let actual = Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive nm) (Unsafe.fromInductive ln))
+  let expect = Safe.thin nm ln
+  let actual = Fast.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 

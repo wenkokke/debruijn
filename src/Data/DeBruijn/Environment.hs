@@ -4,7 +4,7 @@ module Data.DeBruijn.Environment (
   (!),
 ) where
 
-import Data.DeBruijn.Environment.Unsafe (
+import Data.DeBruijn.Environment.Fast (
   Env (Nil, (:>)),
   (!),
  )

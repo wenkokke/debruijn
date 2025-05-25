@@ -24,7 +24,7 @@ foreign import capi unsafe "pext.c pext"
   pext :: BitVec -> BitVec -> BitVec
 
 --------------------------------------------------------------------------------
--- Inductive Natural Numbers
+-- Safe Natural Numbers
 --------------------------------------------------------------------------------
 {-+}
 data Nat

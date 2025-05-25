@@ -4,14 +4,14 @@
 module Test.Data.DeBruijn.Index (tests) where
 
 import Data.Data (type (:~:) (Refl))
-import Data.DeBruijn.Index.Inductive qualified as Inductive
-import Data.DeBruijn.Index.Inductive qualified as Unsafe (fromInductive, toInductive)
-import Data.DeBruijn.Index.Inductive.Arbitrary ()
-import Data.DeBruijn.Index.Unsafe qualified as Unsafe
+import Data.DeBruijn.Index.Fast qualified as Fast
+import Data.DeBruijn.Index.Safe qualified as Fast (fromInductive, toInductive)
+import Data.DeBruijn.Index.Safe qualified as Safe
+import Data.DeBruijn.Index.Safe.Arbitrary ()
 import Data.Proxy (Proxy (..))
-import Data.Type.Nat.Singleton.Inductive (SNat (..))
-import Data.Type.Nat.Singleton.Inductive qualified as Inductive (SomeSNat (..), decSNat)
-import Data.Type.Nat.Singleton.Inductive.Arbitrary ()
+import Data.Type.Nat.Singleton.Safe (SNat (..))
+import Data.Type.Nat.Singleton.Safe qualified as Safe (SomeSNat (..), decSNat)
+import Data.Type.Nat.Singleton.Safe.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (NonNegative (..), Positive (..), Property, counterexample, once, testProperty)
 import Text.Printf (printf)
@@ -34,58 +34,58 @@ tests =
 test_zeroIx :: Property
 test_zeroIx =
   once $
-    Inductive.FZ == Unsafe.toInductive Unsafe.FZ
+    Safe.FZ == Fast.toInductive Fast.FZ
 
-test_succIx :: Inductive.SomeIx -> Property
-test_succIx (Inductive.SomeIx _ i) = do
-  let expect = Inductive.FS i
-  let actual = Unsafe.toInductive (Unsafe.FS (Unsafe.fromInductive i))
+test_succIx :: Safe.SomeIx -> Property
+test_succIx (Safe.SomeIx _ i) = do
+  let expect = Safe.FS i
+  let actual = Fast.toInductive (Fast.FS (Fast.fromInductive i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_caseIx :: Inductive.SomeIx -> Bool
-test_caseIx (Inductive.SomeIx _ i) =
-  case (i, Unsafe.fromInductive i) of
-    (Inductive.FZ, Unsafe.FZ) -> True
-    (Inductive.FS i', Unsafe.FS j') -> i' == Unsafe.toInductive j'
+test_caseIx :: Safe.SomeIx -> Bool
+test_caseIx (Safe.SomeIx _ i) =
+  case (i, Fast.fromInductive i) of
+    (Safe.FZ, Fast.FZ) -> True
+    (Safe.FS i', Fast.FS j') -> i' == Fast.toInductive j'
     _ -> False
 
-test_eqIxEq :: Inductive.SomeIx -> Inductive.SomeIx -> Property
-test_eqIxEq (Inductive.SomeIx _ i) (Inductive.SomeIx _ j) = do
-  let expect = Inductive.eqIx i j
-  let actual = Unsafe.eqIx (Unsafe.fromInductive i) (Unsafe.fromInductive j)
+test_eqIxEq :: Safe.SomeIx -> Safe.SomeIx -> Property
+test_eqIxEq (Safe.SomeIx _ i) (Safe.SomeIx _ j) = do
+  let expect = Safe.eqIx i j
+  let actual = Fast.eqIx (Fast.fromInductive i) (Fast.fromInductive j)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_fromIxRawEq :: Inductive.SomeIx -> Property
-test_fromIxRawEq (Inductive.SomeIx _ i) = do
-  let expect = Inductive.fromIxRaw i
-  let actual = Unsafe.fromIxRaw (Unsafe.fromInductive i)
+test_fromIxRawEq :: Safe.SomeIx -> Property
+test_fromIxRawEq (Safe.SomeIx _ i) = do
+  let expect = Safe.fromIxRaw i
+  let actual = Fast.fromIxRaw (Fast.fromInductive i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_fromIxEq :: Inductive.SomeIx -> Property
-test_fromIxEq (Inductive.SomeIx _ i) = do
-  let expect = Inductive.fromIx @Int i
-  let actual = Unsafe.fromIx @Int (Unsafe.fromInductive i)
+test_fromIxEq :: Safe.SomeIx -> Property
+test_fromIxEq (Safe.SomeIx _ i) = do
+  let expect = Safe.fromIx @Int i
+  let actual = Fast.fromIx @Int (Fast.fromInductive i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_injectEq :: Inductive.SomeSNat -> Inductive.SomeIx -> Property
-test_injectEq (Inductive.SomeSNat n) (Inductive.SomeIx _ i) = do
-  let expect = Inductive.inject n i
-  let actual = Unsafe.toInductive (Unsafe.inject (erase n) (Unsafe.fromInductive i))
+test_injectEq :: Safe.SomeSNat -> Safe.SomeIx -> Property
+test_injectEq (Safe.SomeSNat n) (Safe.SomeIx _ i) = do
+  let expect = Safe.inject n i
+  let actual = Fast.toInductive (Fast.inject (erase n) (Fast.fromInductive i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
 test_thinEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
 test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
-  , Inductive.SomeIx (S n) i <- Inductive.toSomeIxRaw (nRaw + 1, iRaw)
-  , Inductive.SomeIx n' j <- Inductive.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Inductive.decSNat n n' = do
-      let expect = Inductive.thin i j
-      let actual = Unsafe.toInductive (Unsafe.thin (Unsafe.fromInductive i) (Unsafe.fromInductive j))
+  , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw + 1, iRaw)
+  , Safe.SomeIx n' j <- Safe.toSomeIxRaw (nRaw, jRaw)
+  , Just Refl <- Safe.decSNat n n' = do
+      let expect = Safe.thin i j
+      let actual = Fast.toInductive (Fast.thin (Fast.fromInductive i) (Fast.fromInductive j))
       counterexample (printf "%s == %s" (show expect) (show actual)) $
         expect == actual
   | otherwise = error "test_thinEq: could not construct test"
@@ -93,11 +93,11 @@ test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
 test_thickEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
 test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
-  , Inductive.SomeIx (S n) i <- Inductive.toSomeIxRaw (nRaw, iRaw)
-  , Inductive.SomeIx (S n') j <- Inductive.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Inductive.decSNat n n' = do
-      let expect = Inductive.thick i j
-      let actual = Unsafe.toInductive <$> Unsafe.thick (Unsafe.fromInductive i) (Unsafe.fromInductive j)
+  , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw, iRaw)
+  , Safe.SomeIx (S n') j <- Safe.toSomeIxRaw (nRaw, jRaw)
+  , Just Refl <- Safe.decSNat n n' = do
+      let expect = Safe.thick i j
+      let actual = Fast.toInductive <$> Fast.thick (Fast.fromInductive i) (Fast.fromInductive j)
       counterexample (printf "%s == %s" (show expect) (show actual)) $
         expect == actual
   | otherwise = error "test_thinEq: could not construct test"

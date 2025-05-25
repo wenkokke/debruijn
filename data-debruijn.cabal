@@ -1,7 +1,7 @@
 cabal-version:   3.4
 name:            data-debruijn
 version:         0.0.0.0
-synopsis:        unsafe and type-safe implementation of DeBruijn indices.
+synopsis:        fast and type-safe implementation of DeBruijn indices.
 description:
   See <https://github.com/wenkokke/gilear/blob/main/packages/data-debruijn/#README>
 
@@ -41,8 +41,8 @@ library
     Data.Type.Nat.Singleton
 
   build-depends:
+    , data-debruijn:fast
     , data-debruijn:typenats
-    , data-debruijn:unsafe
 
   -- NOTE: GHC does not detect that the package "data-debruijn:typenats"
   --       is used by the "reexported-modules" declaration.
@@ -71,15 +71,15 @@ library typenats
   exposed-modules: Data.Type.Nat
   build-depends:   base >=4.18 && <5
 
-library unsafe
+library fast
   import:          language
   visibility:      public
-  hs-source-dirs:  src-unsafe
+  hs-source-dirs:  src-fast
   exposed-modules:
-    Data.DeBruijn.Environment.Unsafe
-    Data.DeBruijn.Index.Unsafe
-    Data.DeBruijn.Thinning.Unsafe
-    Data.Type.Nat.Singleton.Unsafe
+    Data.DeBruijn.Environment.Fast
+    Data.DeBruijn.Index.Fast
+    Data.DeBruijn.Thinning.Fast
+    Data.Type.Nat.Singleton.Fast
 
   build-depends:
     , base                    >=4.18 && <5
@@ -93,20 +93,20 @@ library unsafe
   else
     build-depends: containers >=0.6.8 && <0.9
 
-library inductive
+library safe
   import:          language
   visibility:      public
-  hs-source-dirs:  src-inductive
+  hs-source-dirs:  src-safe
   exposed-modules:
-    Data.DeBruijn.Environment.Inductive
-    Data.DeBruijn.Index.Inductive
-    Data.DeBruijn.Thinning.Inductive
-    Data.Type.Nat.Singleton.Inductive
+    Data.DeBruijn.Environment.Safe
+    Data.DeBruijn.Index.Safe
+    Data.DeBruijn.Thinning.Safe
+    Data.Type.Nat.Singleton.Safe
 
   build-depends:
     , base                    >=4.18 && <5
+    , data-debruijn:fast
     , data-debruijn:typenats
-    , data-debruijn:unsafe
     , deepseq                 ^>=1.5
 
 library arbitrary
@@ -114,19 +114,19 @@ library arbitrary
   visibility:      public
   hs-source-dirs:  src-arbitrary
   exposed-modules:
-    Data.DeBruijn.Index.Inductive.Arbitrary
-    Data.DeBruijn.Index.Unsafe.Arbitrary
-    Data.DeBruijn.Thinning.Inductive.Arbitrary
-    Data.Type.Nat.Singleton.Inductive.Arbitrary
-    Data.Type.Nat.Singleton.Unsafe.Arbitrary
+    Data.DeBruijn.Index.Fast.Arbitrary
+    Data.DeBruijn.Index.Safe.Arbitrary
+    Data.DeBruijn.Thinning.Safe.Arbitrary
+    Data.Type.Nat.Singleton.Fast.Arbitrary
+    Data.Type.Nat.Singleton.Safe.Arbitrary
     Numeric.Natural.Arbitrary
 
   build-depends:
     , base
-    , data-debruijn:inductive
+    , data-debruijn:fast
+    , data-debruijn:safe
     , data-debruijn:typenats
-    , data-debruijn:unsafe
-    , QuickCheck               >=2.9 && <3.0
+    , QuickCheck              >=2.9 && <3.0
 
 test-suite data-debruijn-test
   import:         language
@@ -141,8 +141,8 @@ test-suite data-debruijn-test
   build-depends:
     , base
     , data-debruijn:arbitrary
-    , data-debruijn:inductive
-    , data-debruijn:unsafe
+    , data-debruijn:fast
+    , data-debruijn:safe
     , tasty
     , tasty-quickcheck
 
@@ -154,10 +154,10 @@ benchmark data-debruijn-bench-time
   other-modules:  Bench.Time.Data.DeBruijn.Index
   build-depends:
     , base
-    , criterion                ^>=1.6
-    , data-debruijn:inductive
-    , data-debruijn:unsafe
-    , deepseq                  ^>=1.5
+    , criterion           ^>=1.6
+    , data-debruijn:fast
+    , data-debruijn:safe
+    , deepseq             ^>=1.5
 
 benchmark data-debruijn-bench-space
   import:         language
@@ -168,8 +168,8 @@ benchmark data-debruijn-bench-space
   build-depends:
     , base
     , bytestring
-    , cassava                  ^>=0.5
-    , data-debruijn:inductive
-    , data-debruijn:unsafe
-    , deepseq                  ^>=1.5
-    , weigh                    ^>=0.0.18
+    , cassava             ^>=0.5
+    , data-debruijn:fast
+    , data-debruijn:safe
+    , deepseq             ^>=1.5
+    , weigh               ^>=0.0.18
