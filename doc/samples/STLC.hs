@@ -3,8 +3,8 @@
 
 module STLC where
 
--- import Data.DeBruijn.Environment (Env, (!))
-import Data.DeBruijn.Index (Ix)
+import Data.DeBruijn.Environment (Env ((:>)), (!))
+import Data.DeBruijn.Index (Ix (..))
 import Data.DeBruijn.Thinning (Thin (..), type (:<=) (..))
 import Data.Kind (Type)
 import Data.Type.Nat (Nat (..))
@@ -29,11 +29,11 @@ instance Thin Tm where
     Lam body -> Lam <$> thick (KeepOne nm) body
     App fun arg -> App <$> thick nm fun <*> thick nm arg
 
--- exts :: Env n (Tm m) -> Env (S n) (Tm (S m))
--- exts env = fmap (Drop (keepAll _)) env :> Var FZ
+exts :: Env n (Tm m) -> Env (S n) (Tm (S m))
+exts env = fmap (thin (DropOne KeepAll)) env :> Var FZ
 
--- subst :: Env n (Tm m) -> Tm n -> Tm m
--- subst env = \case
---   Var ix -> env ! ix
---   Lam body -> Lam (subst (_ env :> Var FZ) body)
---   App fun arg -> App (subst env fun) (subst env arg)
+subst :: Env n (Tm m) -> Tm n -> Tm m
+subst env = \case
+  Var ix -> env ! ix
+  Lam body -> Lam (subst (exts env) body)
+  App fun arg -> App (subst env fun) (subst env arg)
