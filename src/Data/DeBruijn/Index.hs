@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Data.DeBruijn.Index (
   -- * DeBruijn Indexes
   Ix (FZ, FS),
@@ -19,6 +21,25 @@ module Data.DeBruijn.Index (
   fromSomeIxRaw,
 ) where
 
+#ifdef EXPORT_SAFE_API
+import Data.DeBruijn.Index.Safe (
+  Ix (FS, FZ),
+  SomeIx (..),
+  eqIx,
+  fromIx,
+  fromIxRaw,
+  fromSomeIx,
+  fromSomeIxRaw,
+  inject,
+  isPos,
+  raise,
+  thick,
+  thin,
+  toSomeIx,
+  toSomeIxRaw,
+  withSomeIx,
+ )
+#else
 import Data.DeBruijn.Index.Fast (
   Ix (FS, FZ),
   SomeIx (..),
@@ -36,3 +57,4 @@ import Data.DeBruijn.Index.Fast (
   toSomeIxRaw,
   withSomeIx,
  )
+#endif

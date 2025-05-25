@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ExplicitNamespaces #-}
 
 module Data.DeBruijn.Thinning (
@@ -16,6 +17,18 @@ module Data.DeBruijn.Thinning (
   Thin (..),
 ) where
 
+#ifdef EXPORT_SAFE_API
+import Data.DeBruijn.Thinning.Safe (
+  SomeTh (..),
+  Thin (..),
+  dropAll,
+  fromBits,
+  fromBitsRaw,
+  fromBools,
+  toBools,
+  (:<=) (DropOne, KeepAll, KeepOne),
+ )
+#else
 import Data.DeBruijn.Thinning.Fast (
   SomeTh (..),
   Thin (..),
@@ -26,3 +39,4 @@ import Data.DeBruijn.Thinning.Fast (
   toBools,
   (:<=) (DropOne, KeepAll, KeepOne),
  )
+#endif

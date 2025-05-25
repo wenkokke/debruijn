@@ -13,6 +13,11 @@ category:        Language
 build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
+flag safe
+  description: Export the safe API.
+  manual:      True
+  default:     False
+
 flag skew-list
   description: Use the skew-list package to represent environments.
   manual:      True
@@ -33,6 +38,7 @@ library
   import:             language
   hs-source-dirs:     src
   default-extensions: NoImplicitPrelude
+  build-depends:      data-debruijn:typenats
   reexported-modules: Data.Type.Nat
   exposed-modules:
     Data.DeBruijn.Environment
@@ -40,9 +46,12 @@ library
     Data.DeBruijn.Thinning
     Data.Type.Nat.Singleton
 
-  build-depends:
-    , data-debruijn:fast
-    , data-debruijn:typenats
+  if flag(safe)
+    build-depends: data-debruijn:safe
+    cpp-options:   -DEXPORT_SAFE_API
+
+  else
+    build-depends: data-debruijn:fast
 
   -- NOTE: GHC does not detect that the package "data-debruijn:typenats"
   --       is used by the "reexported-modules" declaration.
