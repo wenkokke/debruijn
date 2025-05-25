@@ -82,10 +82,10 @@ fromInductive Z = Fast.Z
 fromInductive (S n) = Fast.S (fromInductive n)
 
 -- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
-{-# SPECIALIZE fromSNat :: SNat n -> Int #-}
 fromSNat :: (Integral i) => SNat n -> i
 fromSNat Z = 0
 fromSNat (S n') = 1 + fromSNat n'
+{-# SPECIALIZE fromSNat :: SNat n -> Int #-}
 
 fromSNatRaw :: SNat n -> Int
 fromSNatRaw = fromSNat

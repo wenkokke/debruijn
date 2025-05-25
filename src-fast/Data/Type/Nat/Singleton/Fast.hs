@@ -16,6 +16,7 @@ module Data.Type.Nat.Singleton.Fast (
   SNat (Z, S),
   fromSNat,
   fromSNatRaw,
+  plus,
   decSNat,
 
   -- * Existential Wrapper
@@ -94,10 +95,6 @@ elSNatRep ifZ ifS n =
 type SNat :: Nat -> Type
 newtype SNat n = UnsafeSNat {snatRep :: SNatRep}
 
-instance NFData (SNat n) where
-  rnf :: SNat n -> ()
-  rnf (UnsafeSNat n) = rnf n
-
 type role SNat nominal
 
 mkZ :: SNat Z
@@ -107,20 +104,6 @@ mkZ = UnsafeSNat mkZRep
 mkS :: SNat n -> SNat (S n)
 mkS = UnsafeSNat . mkSRep . (.snatRep)
 {-# INLINE mkS #-}
-
--- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
-fromSNat :: (Integral i) => SNat n -> i
-fromSNat = fromInteger . toInteger . (.snatRep)
-
--- | @'fromSNatRaw' n@ returns the raw underlying representation of 'SNat n'.
-fromSNatRaw :: SNat n -> SNatRep
-fromSNatRaw = (.snatRep)
-
-instance Show (SNat n) where
-  showsPrec :: Int -> SNat n -> ShowS
-  showsPrec p = \case
-    Z -> showString "Z"
-    S n -> showParen (p > 10) $ showString "S " . showsPrec 11 n
 
 -- | @'SNatF'@ is the base functor of @'SNat'@.
 data SNatF (snat :: Nat -> Type) (n :: Nat) where
@@ -148,16 +131,36 @@ pattern S n <- (projectSNat -> SF n) where S n = embedSNat (SF n)
 
 {-# COMPLETE Z, S #-}
 
+instance Eq (SNat n) where
+  (==) :: SNat n -> SNat n -> Bool
+  m == n = isJust (decSNat m n)
+
+instance Show (SNat n) where
+  showsPrec :: Int -> SNat n -> ShowS
+  showsPrec p = \case
+    Z -> showString "Z"
+    S n -> showParen (p > 10) $ showString "S " . showsPrec 11 n
+
+deriving newtype instance NFData (SNat n)
+
+-- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
+fromSNat :: (Integral i) => SNat n -> i
+fromSNat = fromInteger . toInteger . (.snatRep)
+
+-- | @'fromSNatRaw' n@ returns the raw underlying representation of 'SNat n'.
+fromSNatRaw :: SNat n -> SNatRep
+fromSNatRaw = (.snatRep)
+
+-- | Addition for natural number singletons.
+plus :: SNat n -> SNat m -> SNat (n + m)
+n `plus` m = UnsafeSNat (n.snatRep + m.snatRep)
+
 -- | Decidable equality for natural number singletons.
 decSNat :: SNat n -> SNat m -> Maybe (n :~: m)
 decSNat n m =
   if n.snatRep == m.snatRep
     then Just (unsafeCoerce Refl)
     else Nothing
-
-instance Eq (SNat n) where
-  (==) :: SNat n -> SNat n -> Bool
-  m == n = isJust (decSNat m n)
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -167,15 +170,15 @@ instance Eq (SNat n) where
 type SomeSNat :: Type
 data SomeSNat = forall (n :: Nat). SomeSNat !(SNat n)
 
-instance NFData SomeSNat where
-  rnf :: SomeSNat -> ()
-  rnf (SomeSNat n) = rnf n
-
-deriving instance Show SomeSNat
-
 instance Eq SomeSNat where
   (==) :: SomeSNat -> SomeSNat -> Bool
   SomeSNat m == SomeSNat n = isJust (decSNat m n)
+
+deriving instance Show SomeSNat
+
+instance NFData SomeSNat where
+  rnf :: SomeSNat -> ()
+  rnf (SomeSNat n) = rnf n
 
 -- | Evaluate a term with access to the underlying @'SNat'@.
 withSomeSNat :: (forall n. SNat n -> a) -> SomeSNat -> a

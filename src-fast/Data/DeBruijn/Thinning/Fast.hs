@@ -34,7 +34,7 @@ import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Fast (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Fast (SNat (..), SomeSNat (..))
+import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
 --------------------------------------------------------------------------------
@@ -179,25 +179,31 @@ dropOneSomeTh SomeTh{..} =
     , value = DropOne value
     }
 
-fromBools :: SomeSNat -> [Bool] -> SomeTh
+fromBools :: (Integral i) => i -> [Bool] -> SomeTh
 fromBools bound = go
  where
-  go [] = keepAllSomeTh bound
+  go [] = keepAllSomeTh (toSomeSNat bound)
   go (False : bools) = keepOneSomeTh (go bools)
   go (True : bools) = dropOneSomeTh (go bools)
+{-# SPECIALIZE fromBools :: SNatRep -> [Bool] -> SomeTh #-}
 
-fromBits :: (Bits bs) => SomeSNat -> bs -> SomeTh
+fromBits :: (Integral i, Bits bs) => i -> bs -> SomeTh
 fromBits bound = go
  where
   go bits
-    | bits == zeroBits = keepAllSomeTh bound
+    | bits == zeroBits = keepAllSomeTh (toSomeSNat bound)
     | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
     | otherwise = keepOneSomeTh (go (shift bits (-1)))
-{-# SPECIALIZE fromBits :: SomeSNat -> Integer -> SomeTh #-}
+{-# SPECIALIZE fromBits :: SNatRep -> ThRep -> SomeTh #-}
 
--- TODO: Optimise 'fromBitsRaw' by using Integer as ThRep.
-fromBitsRaw :: SomeSNat -> ThRep -> SomeTh
-fromBitsRaw = fromBits
+fromBitsRaw :: SNatRep -> ThRep -> SomeTh
+fromBitsRaw nRep thRep
+  | SomeSNat n <- toSomeSNatRaw nRep
+  , let dRep = popCount thRep
+  , SomeSNat d <- toSomeSNatRaw dRep
+  , let m = n `plus` d
+  , let nm = UnsafeTh thRep =
+      SomeTh n m nm
 
 --------------------------------------------------------------------------------
 -- Thinning Class
