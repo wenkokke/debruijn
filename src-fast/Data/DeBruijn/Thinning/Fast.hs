@@ -52,8 +52,8 @@ mkKeepOneRep = (`shift` 1)
 mkDropOneRep :: ThRep -> ThRep
 mkDropOneRep = (`setBit` 0) . (`shift` 1)
 
-recThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
-recThRep ifKeepAll ifKeepOne ifDropOne th
+elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+elThRep ifKeepAll ifKeepOne ifDropOne th
   | th == zeroBits = ifKeepAll
   | testBit th 0 = ifDropOne (shift th (-1))
   | otherwise = ifKeepOne (shift th (-1))
@@ -79,10 +79,10 @@ mkDropOne :: n :<= m -> n :<= S m
 mkDropOne = UnsafeTh . mkDropOneRep . (.thRep)
 {-# INLINE mkDropOne #-}
 
-recTh :: a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> n :<= m -> a
-recTh ifKeepAll ifKeepOne ifDropOne =
-  recThRep ifKeepAll (ifKeepOne . UnsafeTh) (ifDropOne . UnsafeTh) . (.thRep)
-{-# INLINE recTh #-}
+elTh :: a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> n :<= m -> a
+elTh ifKeepAll ifKeepOne ifDropOne =
+  elThRep ifKeepAll (ifKeepOne . UnsafeTh) (ifDropOne . UnsafeTh) . (.thRep)
+{-# INLINE elTh #-}
 
 data ThF (th :: Nat -> Nat -> Type) (n :: Nat) (m :: Nat) where
   KeepAllF :: ThF th n n
@@ -91,7 +91,7 @@ data ThF (th :: Nat -> Nat -> Type) (n :: Nat) (m :: Nat) where
 
 projectTh :: n :<= m -> ThF (:<=) n m
 projectTh =
-  recTh (unsafeCoerce KeepAllF) (unsafeCoerce . KeepOneF) (unsafeCoerce . DropOneF)
+  elTh (unsafeCoerce KeepAllF) (unsafeCoerce . KeepOneF) (unsafeCoerce . DropOneF)
 {-# INLINE projectTh #-}
 
 embedTh :: ThF (:<=) n m -> n :<= m

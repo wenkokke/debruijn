@@ -84,11 +84,11 @@ mkSnocRep :: EnvRep a -> a -> EnvRep a
 mkSnocRep xs x = xs Seq.:|> x
 {-# INLINE mkSnocRep #-}
 
-elEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
-elEnvRep ifNil ifSnoc = \case
+recEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
+recEnvRep ifNil ifSnoc = \case
   Seq.Empty -> ifNil
   xs Seq.:|> x -> ifSnoc xs x
-{-# INLINE elEnvRep #-}
+{-# INLINE recEnvRep #-}
 
 lookupRep :: Int -> EnvRep a -> a
 lookupRep = (fromJust .) . Seq.lookup
@@ -120,7 +120,7 @@ mkSnoc = (UnsafeEnv .) . mkSnocRep . (.envRep)
 {-# INLINE mkSnoc #-}
 
 elEnv :: b -> (Env (Pred n) a -> a -> b) -> Env n a -> b
-elEnv ifNil ifSnoc = elEnvRep ifNil (ifSnoc . UnsafeEnv) . (.envRep)
+elEnv ifNil ifSnoc = recEnvRep ifNil (ifSnoc . UnsafeEnv) . (.envRep)
 {-# INLINE elEnv #-}
 
 type EnvF :: (Nat -> Type -> Type) -> Nat -> Type -> Type
