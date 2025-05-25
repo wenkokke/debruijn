@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -6,6 +7,7 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
@@ -31,6 +33,10 @@ module Data.Type.Nat.Singleton.Unsafe (
   plusComm,
   plusAssoc,
 
+  -- * Linking Type-Level and Value-Level
+  KnownNat (..),
+  withKnownNat,
+
   -- * Induction Principles
   withInstance,
 
@@ -42,9 +48,10 @@ import Control.DeepSeq (NFData (..))
 import Control.Exception (assert)
 import Data.Kind (Constraint, Type)
 import Data.Maybe (isJust)
-import Data.Proxy (Proxy)
+import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred, type (+))
+import GHC.TypeLits qualified as GHC
 import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -56,24 +63,22 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Natural Number Singleton Representation
 --------------------------------------------------------------------------------
 
-#define SNatRep Int
-
-isValidSNatRep :: SNatRep -> Bool
+isValidSNatRep :: Int -> Bool
 isValidSNatRep = (>= 0)
 
-mkZRep :: SNatRep
+mkZRep :: Int
 mkZRep = 0
 {-# INLINE mkZRep #-}
 
-mkSRep :: SNatRep -> SNatRep
+mkSRep :: Int -> Int
 mkSRep = (1 +)
 {-# INLINE mkSRep #-}
 
-unSRep :: SNatRep -> SNatRep
+unSRep :: Int -> Int
 unSRep = subtract 1
 {-# INLINE unSRep #-}
 
-elSNatRep :: a -> (SNatRep -> a) -> SNatRep -> a
+elSNatRep :: a -> (Int -> a) -> Int -> a
 elSNatRep ifZ ifS n =
   assert (isValidSNatRep n) $
     if n == mkZRep
@@ -87,7 +92,7 @@ elSNatRep ifZ ifS n =
 
 -- | @'SNat' n@ is the singleton type for natural numbers.
 type SNat :: Nat -> Type
-newtype SNat n = UnsafeSNat {snatRep :: SNatRep}
+newtype SNat n = UnsafeSNat {snatRep :: Int}
 
 instance NFData (SNat n) where
   rnf :: SNat n -> ()
@@ -108,15 +113,14 @@ fromSNat :: (Integral i) => SNat n -> i
 fromSNat = fromInteger . toInteger . (.snatRep)
 
 -- | @'fromSNatRaw' n@ returns the raw underlying representation of 'SNat n'.
-fromSNatRaw :: SNat n -> SNatRep
+fromSNatRaw :: SNat n -> Int
 fromSNatRaw = (.snatRep)
 
 instance Show (SNat n) where
   showsPrec :: Int -> SNat n -> ShowS
-  showsPrec p =
-    showParen (p > 10) . \case
-      Z -> showString "Z"
-      S n -> showString "S " . showsPrec 11 n
+  showsPrec p = \case
+    Z -> showString "Z"
+    S n -> showParen (p > 10) $ showString "S " . showsPrec 11 n
 
 -- | @'SNatF'@ is the base functor of @'SNat'@.
 data SNatF (snat :: Nat -> Type) (n :: Nat) where
@@ -190,7 +194,7 @@ toSomeSNat r
 
 prop> toSomeSNatRaw (fromSomeSNatRaw n) == n
 -}
-toSomeSNatRaw :: SNatRep -> SomeSNat
+toSomeSNatRaw :: Int -> SomeSNat
 toSomeSNatRaw r
   | r < 0 = error $ printf "cannot convert %d to natural number singleton"
   | otherwise = SomeSNat (UnsafeSNat r)
@@ -200,7 +204,7 @@ fromSomeSNat :: (Integral i) => SomeSNat -> i
 fromSomeSNat = withSomeSNat fromSNat
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped singleton.
-fromSomeSNatRaw :: SomeSNat -> SNatRep
+fromSomeSNatRaw :: SomeSNat -> Int
 fromSomeSNatRaw (SomeSNat (UnsafeSNat r)) = r
 
 --------------------------------------------------------------------------------
@@ -221,6 +225,39 @@ plusComm _ _ = unsafeCoerce Refl
 
 plusAssoc :: SNat n -> Proxy m -> Proxy l -> (n + m) + l :~: n + (m + l)
 plusAssoc _ _ _ = unsafeCoerce Refl
+
+--------------------------------------------------------------------------------
+-- Linking Type-Level and Value-Level
+--------------------------------------------------------------------------------
+
+type FromNat :: Nat -> GHC.Nat
+type family FromNat n where
+  FromNat Z = 0
+  FromNat (S n) = FromNat n GHC.+ 1
+
+type KnownNat :: Nat -> Constraint
+class KnownNat n where
+  natSing :: SNat n
+
+instance KnownNat Z where
+  natSing :: SNat Z
+  natSing = Z
+
+instance (KnownNat n) => KnownNat (S n) where
+  natSing :: SNat (S n)
+  natSing = S natSing
+
+data Dict (c :: Constraint) :: Type where
+  Dict :: (c) => Dict c
+
+data FakeKnownNat n = FakeKnownNat (SNat n)
+{-# ANN FakeKnownNat ("HLint: ignore Use newtype instead of data" :: String) #-}
+
+withKnownNat :: SNat n -> ((KnownNat n) => r) -> r
+withKnownNat n action = case knownNat n of Dict -> action
+ where
+  knownNat :: SNat n -> Dict (KnownNat n)
+  knownNat = unsafeCoerce . FakeKnownNat
 
 --------------------------------------------------------------------------------
 -- Induction Principles

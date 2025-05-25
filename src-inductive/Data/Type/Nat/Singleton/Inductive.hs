@@ -28,6 +28,10 @@ module Data.Type.Nat.Singleton.Inductive (
   plusComm,
   plusAssoc,
 
+  -- * Linking Type-Level and Value-Level
+  KnownNat (..),
+  withKnownNat,
+
   -- * Induction Principles
   withInstance,
 ) where
@@ -55,6 +59,16 @@ data SNat n where
   Z :: SNat Z
   S :: SNat n -> SNat (S n)
 
+instance Eq (SNat n) where
+  (==) :: SNat n -> SNat n -> Bool
+  m == n = isJust (decSNat m n)
+
+instance Show (SNat n) where
+  showsPrec :: Int -> SNat n -> ShowS
+  showsPrec p = \case
+    Z -> showString "Z"
+    S n -> showParen (p > 10) $ showString "S " . showsPrec 11 n
+
 instance NFData (SNat n) where
   rnf :: SNat n -> ()
   rnf Z = ()
@@ -69,13 +83,6 @@ toInductive (Unsafe.S n) = S (toInductive n)
 fromInductive :: SNat n -> Unsafe.SNat n
 fromInductive Z = Unsafe.Z
 fromInductive (S n) = Unsafe.S (fromInductive n)
-
-instance Show (SNat n) where
-  showsPrec :: Int -> SNat n -> ShowS
-  showsPrec p =
-    showParen (p > 10) . \case
-      Z -> showString "Z"
-      S n -> showString "S " . showsPrec 11 n
 
 -- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
 {-# SPECIALIZE fromSNat :: SNat n -> Int #-}
@@ -97,10 +104,6 @@ decSNat :: SNat m -> SNat n -> Maybe (m :~: n)
 decSNat Z Z = Just Refl
 decSNat (S m') (S n') = (\Refl -> Refl) <$> decSNat m' n'
 decSNat _m _n = Nothing
-
-instance Eq (SNat n) where
-  (==) :: SNat n -> SNat n -> Bool
-  m == n = isJust (decSNat m n)
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -170,6 +173,26 @@ plusComm (S n') m = Eq.apply Refl (plusComm n' m) `Eq.trans` plusCommS m (erase 
 plusAssoc :: SNat n -> Proxy m -> Proxy l -> (n + m) + l :~: n + (m + l)
 plusAssoc Z _m _l = Refl
 plusAssoc (S n') m l = Eq.apply Refl (plusAssoc n' m l)
+
+--------------------------------------------------------------------------------
+-- Linking Type-Level and Value-Level
+--------------------------------------------------------------------------------
+
+type KnownNat :: Nat -> Constraint
+class KnownNat n where
+  natSing :: SNat n
+
+instance KnownNat Z where
+  natSing :: SNat Z
+  natSing = Z
+
+instance (KnownNat n) => KnownNat (S n) where
+  natSing :: SNat (S n)
+  natSing = S natSing
+
+withKnownNat :: SNat n -> ((KnownNat n) => r) -> r
+withKnownNat Z action = action
+withKnownNat (S n) action = withKnownNat n action
 
 --------------------------------------------------------------------------------
 -- Induction Principles

@@ -54,16 +54,21 @@ eqIx FZ FZ = True
 eqIx (FS i) (FS j) = eqIx i j
 eqIx _ _ = False
 
-instance NFData (Ix n) where
-  rnf :: Ix n -> ()
-  rnf FZ = ()
-  rnf (FS i) = rnf i
-
 instance Eq (Ix n) where
   (==) :: Ix n -> Ix n -> Bool
   (==) = eqIx
 
-deriving instance Show (Ix n)
+instance Show (Ix n) where
+  showsPrec :: Int -> Ix n -> ShowS
+  showsPrec p =
+    showParen (p > 10) . \case
+      FZ -> showString "FZ"
+      FS n -> showString "FS " . showsPrec 11 n
+
+instance NFData (Ix n) where
+  rnf :: Ix n -> ()
+  rnf FZ = ()
+  rnf (FS i) = rnf i
 
 -- | Convert from the efficient representation 'Unsafe.Ix' to the inductive representation 'Ix'.
 toInductive :: Unsafe.Ix n -> Ix n
