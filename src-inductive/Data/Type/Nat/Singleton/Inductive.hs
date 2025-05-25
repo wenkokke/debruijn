@@ -31,9 +31,6 @@ module Data.Type.Nat.Singleton.Inductive (
   -- * Linking Type-Level and Value-Level
   KnownNat (..),
   withKnownNat,
-
-  -- * Induction Principles
-  withInstance,
 ) where
 
 import Control.DeepSeq (NFData (..))
@@ -193,20 +190,6 @@ instance (KnownNat n) => KnownNat (S n) where
 withKnownNat :: SNat n -> ((KnownNat n) => r) -> r
 withKnownNat Z action = action
 withKnownNat (S n) action = withKnownNat n action
-
---------------------------------------------------------------------------------
--- Induction Principles
---------------------------------------------------------------------------------
-
-withInstance ::
-  forall (c :: Nat -> Constraint).
-  (c Z, forall n. c (S n)) =>
-  forall (n :: Nat) (r :: Type).
-  SNat n ->
-  ((c n) => r) ->
-  r
-withInstance Z action = action
-withInstance (S n) action = withInstance @c n action
 
 --------------------------------------------------------------------------------
 -- Helper Functions

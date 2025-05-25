@@ -37,9 +37,6 @@ module Data.Type.Nat.Singleton.Unsafe (
   KnownNat (..),
   withKnownNat,
 
-  -- * Induction Principles
-  withInstance,
-
   -- * Unsafe
   SNat (UnsafeSNat, snatRep),
 ) where
@@ -258,17 +255,3 @@ withKnownNat n action = case knownNat n of Dict -> action
  where
   knownNat :: SNat n -> Dict (KnownNat n)
   knownNat = unsafeCoerce . FakeKnownNat
-
---------------------------------------------------------------------------------
--- Induction Principles
---------------------------------------------------------------------------------
-
-withInstance ::
-  forall (c :: Nat -> Constraint).
-  (c Z, forall n. c (S n)) =>
-  forall (n :: Nat) (r :: Type).
-  SNat n ->
-  ((c n) => r) ->
-  r
-withInstance Z action = action
-withInstance (S n) action = withInstance @c n action
