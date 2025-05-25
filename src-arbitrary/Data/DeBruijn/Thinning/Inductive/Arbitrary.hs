@@ -8,7 +8,7 @@ module Data.DeBruijn.Thinning.Inductive.Arbitrary (
   arbitraryTh,
 ) where
 
-import Data.DeBruijn.Thinning.Inductive (SomeTh (..), dropAll, keepAll, type (:<=) (Drop, Keep))
+import Data.DeBruijn.Thinning.Inductive (SomeTh (..), dropAll, type (:<=) (DropOne, KeepAll, KeepOne))
 import Data.Proxy (Proxy (..))
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (type (+))
@@ -27,19 +27,12 @@ instance Arbitrary SomeTh where
     pure SomeTh{..}
 
 arbitraryTh :: SNat n -> SNat m -> Gen (n :<= (n + m))
-arbitraryTh n Z =
-  case plusUnitR n of
-    Refl -> pure (keepAll n)
-arbitraryTh Z m =
-  pure (dropAll m)
-arbitraryTh n@(S n') m@(S m') =
-  oneof [keep1, drop1]
+arbitraryTh n Z = case plusUnitR n of Refl -> pure KeepAll
+arbitraryTh Z m = pure (dropAll m)
+arbitraryTh n@(S n') m@(S m') = oneof [keepOne, dropOne]
  where
-  keep1 =
-    Keep <$> arbitraryTh n' m
-  drop1 =
-    case plusCommS n' (erase m') of
-      Refl -> Drop <$> arbitraryTh n m'
+  keepOne = KeepOne <$> arbitraryTh n' m
+  dropOne = case plusCommS n' (erase m') of Refl -> DropOne <$> arbitraryTh n m'
 
 --------------------------------------------------------------------------------
 -- Helper Functions

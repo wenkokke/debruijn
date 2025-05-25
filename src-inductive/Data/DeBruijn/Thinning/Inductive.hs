@@ -1,14 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Data.DeBruijn.Thinning.Inductive (
   -- * Thinnings
-  (:<=) (Done, Keep, Drop),
+  (:<=) (KeepAll, KeepOne, DropOne),
   toInductive,
   fromInductive,
-  keepAll,
   dropAll,
   toBools,
 
@@ -27,69 +27,74 @@ import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Inductive (Ix (..), isPos)
 import Data.DeBruijn.Thinning.Unsafe qualified as Unsafe
 import Data.Kind (Constraint, Type)
-import Data.Type.Nat (Nat (..))
-import Data.Type.Nat.Singleton.Inductive (SNat (..))
+import Data.Type.Nat (Nat (..), Pos, Pred)
+import Data.Type.Nat.Singleton.Inductive (SNat (..), SomeSNat (..))
 
 --------------------------------------------------------------------------------
 -- Thinnings
 --------------------------------------------------------------------------------
 
 -- TODO:
--- Rewrite (:<=) using
--- @
---  Refl :: n :<= n
--- @
--- instead of @Done@.
+-- This does not work, because it stores superfluous information, i.e., we're not
+-- supposed to be able to tell the difference between @KeepAll@ and @KeepOne KeepAll@.
 
 -- | @n ':<=' m@ is the type of thinnings from @m@ to @n@.
 type (:<=) :: Nat -> Nat -> Type
 data (:<=) n m where
-  Done :: Z :<= Z
-  Keep :: n :<= m -> S n :<= S m
-  Drop :: n :<= m -> n :<= S m
+  KeepAll :: n :<= n
+  KeepOne_ :: n :<= m -> S n :<= S m
+  DropOne :: n :<= m -> n :<= S m
 
-instance Eq (n :<= m) where
-  Done == Done = True
-  Keep nm == Keep n'm' = nm == n'm'
-  Drop nm == Drop n'm' = nm == n'm'
-  _ == _ = False
+keepOne :: n :<= m -> S n :<= S m
+keepOne KeepAll = KeepAll
+keepOne n'm' = KeepOne_ n'm'
 
-deriving instance Show (n :<= m)
+pattern KeepOne :: () => (Pos n, Pos m) => Pred n :<= Pred m -> n :<= m
+pattern KeepOne n'm' <- KeepOne_ n'm' where KeepOne n'm' = keepOne n'm'
+
+{-# COMPLETE KeepAll, KeepOne, DropOne #-}
+
+deriving stock instance Eq (n :<= m)
+
+instance Show (n :<= m) where
+  showsPrec :: Int -> n :<= m -> ShowS
+  showsPrec p =
+    showParen (p > 10) . \case
+      KeepAll -> showString "KeepAll"
+      KeepOne n'm' -> showString "KeepOne " . showsPrec 11 n'm'
+      DropOne nm' -> showString "DropOne " . showsPrec 11 nm'
 
 instance NFData (n :<= m) where
   rnf :: n :<= m -> ()
-  rnf Done = ()
-  rnf (Keep n'm') = rnf n'm'
-  rnf (Drop nm') = rnf nm'
+  rnf KeepAll = ()
+  rnf (KeepOne n'm') = rnf n'm'
+  rnf (DropOne nm') = rnf nm'
 
 -- | Convert from the efficient representation 'Unsafe.:<=' to the inductive representation ':<='.
 toInductive :: n Unsafe.:<= m -> n :<= m
-toInductive Unsafe.Done = Done
-toInductive (Unsafe.Keep n'm') = Keep (toInductive n'm')
-toInductive (Unsafe.Drop nm') = Drop (toInductive nm')
+toInductive = \case
+  Unsafe.KeepAll -> KeepAll
+  Unsafe.KeepOne n'm' -> KeepOne (toInductive n'm')
+  Unsafe.DropOne nm' -> DropOne (toInductive nm')
 
 -- | Convert from the inductive representation ':<=' to the efficient representation 'Unsafe.:<='.
 fromInductive :: n :<= m -> n Unsafe.:<= m
-fromInductive Done = Unsafe.Done
-fromInductive (Keep n'm') = Unsafe.Keep (fromInductive n'm')
-fromInductive (Drop nm') = Unsafe.Drop (fromInductive nm')
+fromInductive = \case
+  KeepAll -> Unsafe.KeepAll
+  KeepOne n'm' -> Unsafe.KeepOne (fromInductive n'm')
+  DropOne nm' -> Unsafe.DropOne (fromInductive nm')
 
--- | The reflexive thinning.
-keepAll :: SNat n -> n :<= n
-keepAll Z = Done
-keepAll (S n) = Keep (keepAll n)
-
--- | The thinning that drops all elements.
-dropAll :: SNat n -> Z :<= n
-dropAll Z = Done
-dropAll (S n) = Drop (dropAll n)
+-- | Drop all entries.
+dropAll :: SNat m -> Z :<= m
+dropAll Z = KeepAll
+dropAll (S m') = DropOne (dropAll m')
 
 -- | Convert a thinning into a list of booleans.
 toBools :: n :<= m -> [Bool]
 toBools = \case
-  Done -> []
-  Keep n'm' -> False : toBools n'm'
-  Drop nm' -> True : toBools nm'
+  KeepAll -> []
+  KeepOne n'm' -> False : toBools n'm'
+  DropOne nm' -> True : toBools nm'
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -103,47 +108,54 @@ data SomeTh
   , value :: n :<= m
   }
 
+deriving stock instance Show SomeTh
+
 instance NFData SomeTh where
   rnf :: SomeTh -> ()
   rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
 
-deriving stock instance Show SomeTh
-
-emptySomeTh :: SomeTh
-emptySomeTh =
+keepAllSomeTh :: SomeSNat -> SomeTh
+keepAllSomeTh (SomeSNat bound) =
   SomeTh
-    { lower = Z
-    , upper = Z
-    , value = Done
+    { lower = bound
+    , upper = bound
+    , value = KeepAll
     }
 
-keepSomeTh :: SomeTh -> SomeTh
-keepSomeTh SomeTh{..} =
+keepOneSomeTh :: SomeTh -> SomeTh
+keepOneSomeTh SomeTh{..} =
   SomeTh
     { lower = S lower
     , upper = S upper
-    , value = Keep value
+    , value = KeepOne value
     }
 
-dropSomeTh :: SomeTh -> SomeTh
-dropSomeTh SomeTh{..} =
+dropOneSomeTh :: SomeTh -> SomeTh
+dropOneSomeTh SomeTh{..} =
   SomeTh
     { lower = lower
     , upper = S upper
-    , value = Drop value
+    , value = DropOne value
     }
 
-fromBools :: [Bool] -> SomeTh
-fromBools [] = emptySomeTh
-fromBools (keepValue : rest)
-  | keepValue = keepSomeTh (fromBools rest)
-  | otherwise = dropSomeTh (fromBools rest)
+fromBools :: SomeSNat -> [Bool] -> SomeTh
+fromBools bound = go
+ where
+  go [] = keepAllSomeTh bound
+  go (False : bools) = keepOneSomeTh (go bools)
+  go (True : bools) = dropOneSomeTh (go bools)
 
-fromBits :: (Integral i, Bits bs) => (i, bs) -> SomeTh
-fromBits (upper, bits) = fromBools (testBit bits <$> [0 .. fromIntegral upper])
+fromBits :: (Bits bs) => SomeSNat -> bs -> SomeTh
+fromBits bound = go
+ where
+  go bits
+    | bits == zeroBits = keepAllSomeTh bound
+    | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
+    | otherwise = keepOneSomeTh (go (shift bits (-1)))
+{-# SPECIALIZE fromBits :: SomeSNat -> Integer -> SomeTh #-}
 
-fromBitsRaw :: (Int, Integer) -> SomeTh
-fromBitsRaw (upper, bits) = fromBools (testBit bits <$> [0 .. upper])
+fromBitsRaw :: SomeSNat -> Integer -> SomeTh
+fromBitsRaw = fromBits
 
 --------------------------------------------------------------------------------
 -- Thinning Class
@@ -159,29 +171,33 @@ instance Thin Ix where
   thin :: n :<= m -> Ix n -> Ix m
   thin !t !i = isPos i $
     case t of
-      Keep n'm' ->
+      KeepAll -> i
+      KeepOne n'm' ->
         case i of
           FZ -> FZ
           FS i' -> FS (thin n'm' i')
-      Drop nm' -> FS (thin nm' i)
+      DropOne nm' -> FS (thin nm' i)
 
   thick :: n :<= m -> Ix m -> Maybe (Ix n)
-  thick Done _i = Nothing
-  thick (Keep _n'm') FZ = Just FZ
-  thick (Keep n'm') (FS i') = FS <$> thick n'm' i'
-  thick (Drop _nm') FZ = Nothing
-  thick (Drop nm') (FS i') = thick nm' i'
+  thick KeepAll i = Just i
+  thick (KeepOne _n'm') FZ = Just FZ
+  thick (KeepOne n'm') (FS i') = FS <$> thick n'm' i'
+  thick (DropOne _nm') FZ = Nothing
+  thick (DropOne nm') (FS i') = thick nm' i'
 
 instance Thin ((:<=) l) where
   thin :: n :<= m -> l :<= n -> l :<= m
-  thin Done Done = Done
-  thin (Keep n'm') (Keep l'n') = Keep (thin n'm' l'n')
-  thin (Keep n'm') (Drop ln') = Drop (thin n'm' ln')
-  thin (Drop nm') ln = Drop (thin nm' ln)
+  thin nm KeepAll = nm
+  thin KeepAll ln = ln
+  thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
+  thin (KeepOne n'm') (DropOne ln') = DropOne (thin n'm' ln')
+  thin (DropOne nm') ln = DropOne (thin nm' ln)
 
   thick :: n :<= m -> l :<= m -> Maybe (l :<= n)
-  thick Done Done = Just Done
-  thick (Keep n'm') (Keep l'n') = Keep <$> thick n'm' l'n'
-  thick (Keep n'm') (Drop ln') = Drop <$> thick n'm' ln'
-  thick (Drop _nm') (Keep _l'n') = Nothing
-  thick (Drop nm') (Drop ln') = thick nm' ln'
+  thick KeepAll lm = Just lm
+  thick (KeepOne n'm') KeepAll = KeepOne <$> thick n'm' KeepAll
+  thick (KeepOne n'm') (KeepOne l'n') = KeepOne <$> thick n'm' l'n'
+  thick (KeepOne n'm') (DropOne ln') = DropOne <$> thick n'm' ln'
+  thick (DropOne _nm') KeepAll = Nothing
+  thick (DropOne _nm') (KeepOne _l'n') = Nothing
+  thick (DropOne nm') (DropOne ln') = thick nm' ln'

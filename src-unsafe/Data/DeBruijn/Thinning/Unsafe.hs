@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -9,8 +11,7 @@
 
 module Data.DeBruijn.Thinning.Unsafe (
   -- * Thinnings
-  (:<=) (Done, Keep, Drop),
-  keepAll,
+  (:<=) (KeepAll, KeepOne, DropOne),
   dropAll,
   toBools,
 
@@ -25,94 +26,36 @@ module Data.DeBruijn.Thinning.Unsafe (
 
   -- * Unsafe
   (:<=) (UnsafeTh),
-  ThRep (ThRep, size, bits),
 ) where
 
-import Control.Exception (assert)
+import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Unsafe (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Unsafe (SNat (..))
+import Data.Type.Nat.Singleton.Unsafe (SNat (..), SomeSNat (..))
 import Unsafe.Coerce (unsafeCoerce)
 
 --------------------------------------------------------------------------------
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-data ThRep = ThRep
-  { size :: {-# UNPACK #-} !Int
-  , bits :: {-# UNPACK #-} !Integer
-  }
-  deriving (Eq, Show)
+#define ThRep Integer
 
-isValidThRep :: ThRep -> Bool
-isValidThRep th =
-  th.size >= popCount th.bits
+mkKeepAllRep :: ThRep
+mkKeepAllRep = zeroBits
 
-mkDoneRep :: ThRep
-mkDoneRep =
-  ThRep
-    { size = 0
-    , bits = zeroBits
-    }
+mkKeepOneRep :: ThRep -> ThRep
+mkKeepOneRep = (`shift` 1)
 
-mkKeepRep :: ThRep -> ThRep
-mkKeepRep th =
-  assert (isValidThRep th) $
-    ThRep
-      { size = 1 + th.size
-      , bits = th.bits
-      }
+mkDropOneRep :: ThRep -> ThRep
+mkDropOneRep = (`setBit` 0) . (`shift` 1)
 
-mkDropRep :: ThRep -> ThRep
-mkDropRep th =
-  assert (isValidThRep th) $
-    ThRep
-      { size = 1 + th.size
-      , bits = setBit th.bits th.size
-      }
-
-unKeepDropRep :: ThRep -> ThRep
-unKeepDropRep th =
-  assert (isValidThRep th && th /= mkDoneRep) $
-    let size' = pred th.size
-    in  ThRep
-          { size = size'
-          , bits = clearBit th.bits size'
-          }
-
-recThRep :: ThRep -> a -> (ThRep -> a) -> (ThRep -> a) -> a
-recThRep th ifDone ifKeep ifDrop =
-  assert (isValidThRep th && th /= mkDoneRep) $
-    if th.size == 0
-      then ifDone
-      else
-        if testBit th.bits (pred th.size)
-          then ifDrop (unKeepDropRep th)
-          else ifKeep (unKeepDropRep th)
-
-thinThRep :: ThRep -> ThRep -> ThRep
-thinThRep th1 th2 =
-  assert (th1.size >= th2.size) $
-    ThRep
-      { size = th1.size `max` th2.size
-      , bits = th1.bits .|. shift th2.bits (th1.size - th2.size)
-      }
-
-toBoolsThRep :: ThRep -> [Bool]
-toBoolsThRep th = testBit th.bits <$> [th.size - 1, th.size - 2 .. 0]
-
-_fromBoolsThRep :: [Bool] -> ThRep
-_fromBoolsThRep th =
-  ThRep
-    { size = length th
-    , bits = foldr (.|.) 0 (zipWith readBit [0 ..] th)
-    }
- where
-  readBit :: Int -> Bool -> Integer
-  readBit _ False = 0
-  readBit i True = bit i
+recThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+recThRep ifKeepAll ifKeepOne ifDropOne th
+  | th == zeroBits = ifKeepAll
+  | testBit th 0 = ifDropOne (shift th (-1))
+  | otherwise = ifKeepOne (shift th (-1))
 
 --------------------------------------------------------------------------------
 -- Thinnings
@@ -123,66 +66,77 @@ newtype (:<=) n m = UnsafeTh {thRep :: ThRep}
 
 type role (:<=) nominal nominal
 
-mkDone :: Z :<= Z
-mkDone = UnsafeTh mkDoneRep
-{-# INLINE mkDone #-}
+mkKeepAll :: n :<= n
+mkKeepAll = UnsafeTh mkKeepAllRep
+{-# INLINE mkKeepAll #-}
 
-mkKeep :: n :<= m -> S n :<= S m
-mkKeep = UnsafeTh . mkKeepRep . (.thRep)
-{-# INLINE mkKeep #-}
+mkKeepOne :: n :<= m -> S n :<= S m
+mkKeepOne = UnsafeTh . mkKeepOneRep . (.thRep)
+{-# INLINE mkKeepOne #-}
 
-mkDrop :: n :<= m -> n :<= S m
-mkDrop = UnsafeTh . mkDropRep . (.thRep)
-{-# INLINE mkDrop #-}
+mkDropOne :: n :<= m -> n :<= S m
+mkDropOne = UnsafeTh . mkDropOneRep . (.thRep)
+{-# INLINE mkDropOne #-}
 
-recTh :: n :<= m -> a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> a
-recTh nm ifDone ifKeep ifDrop = recThRep nm.thRep ifDone (ifKeep . UnsafeTh) (ifDrop . UnsafeTh)
+recTh :: a -> (Pred n :<= Pred m -> a) -> (n :<= Pred m -> a) -> n :<= m -> a
+recTh ifKeepAll ifKeepOne ifDropOne =
+  recThRep ifKeepAll (ifKeepOne . UnsafeTh) (ifDropOne . UnsafeTh) . (.thRep)
 {-# INLINE recTh #-}
 
 data ThF (th :: Nat -> Nat -> Type) (n :: Nat) (m :: Nat) where
-  DoneF :: ThF th Z Z
-  KeepF :: !(th n m) -> ThF th (S n) (S m)
-  DropF :: !(th n m) -> ThF th n (S m)
+  KeepAllF :: ThF th n n
+  KeepOneF :: !(th n m) -> ThF th (S n) (S m)
+  DropOneF :: !(th n m) -> ThF th n (S m)
 
 projectTh :: n :<= m -> ThF (:<=) n m
-projectTh nm = recTh nm (unsafeCoerce DoneF) (unsafeCoerce . KeepF) (unsafeCoerce . DropF)
+projectTh =
+  recTh (unsafeCoerce KeepAllF) (unsafeCoerce . KeepOneF) (unsafeCoerce . DropOneF)
 {-# INLINE projectTh #-}
 
 embedTh :: ThF (:<=) n m -> n :<= m
 embedTh = \case
-  DoneF -> mkDone
-  KeepF n'm' -> mkKeep n'm'
-  DropF nm' -> mkDrop nm'
+  KeepAllF -> mkKeepAll
+  KeepOneF n'm' -> mkKeepOne n'm'
+  DropOneF nm' -> mkDropOne nm'
 {-# INLINE embedTh #-}
 
-pattern Done :: () => (n ~ Z, m ~ Z) => n :<= m
-pattern Done <- (projectTh -> DoneF) where Done = embedTh DoneF
-{-# INLINE Done #-}
+pattern KeepAll :: () => (n ~ m) => n :<= m
+pattern KeepAll <- (projectTh -> KeepAllF) where KeepAll = embedTh KeepAllF
+{-# INLINE KeepAll #-}
 
-pattern Keep :: () => (Pos n, Pos m) => Pred n :<= Pred m -> n :<= m
-pattern Keep nm <- (projectTh -> KeepF nm) where Keep nm = embedTh (KeepF nm)
-{-# INLINE Keep #-}
+pattern KeepOne :: () => (Pos n, Pos m) => Pred n :<= Pred m -> n :<= m
+pattern KeepOne nm <- (projectTh -> KeepOneF nm) where KeepOne nm = embedTh (KeepOneF nm)
+{-# INLINE KeepOne #-}
 
-pattern Drop :: () => (Pos m) => n :<= Pred m -> n :<= m
-pattern Drop nm <- (projectTh -> DropF nm) where Drop nm = embedTh (DropF nm)
-{-# INLINE Drop #-}
+pattern DropOne :: () => (Pos m) => n :<= Pred m -> n :<= m
+pattern DropOne nm <- (projectTh -> DropOneF nm) where DropOne nm = embedTh (DropOneF nm)
+{-# INLINE DropOne #-}
 
-{-# COMPLETE Done, Keep, Drop #-}
+{-# COMPLETE KeepAll, KeepOne, DropOne #-}
 
--- | The reflexive thinning.
-keepAll :: SNat n -> n :<= n
-keepAll Z = Done
-keepAll (S n) = Keep (keepAll n)
+deriving newtype instance Eq (n :<= m)
 
--- | The thinning that drops all elements.
-dropAll :: SNat n -> Z :<= n
-dropAll Z = Done
-dropAll (S n) = Drop (dropAll n)
+instance Show (n :<= m) where
+  showsPrec :: Int -> n :<= m -> ShowS
+  showsPrec p =
+    showParen (p > 10) . \case
+      KeepAll -> showString "KeepAll"
+      KeepOne n'm' -> showString "KeepOne " . showsPrec 11 n'm'
+      DropOne nm' -> showString "DropOne " . showsPrec 11 nm'
+
+deriving newtype instance NFData (n :<= m)
+
+-- | Drop all entries.
+dropAll :: SNat m -> Z :<= m
+dropAll Z = KeepAll
+dropAll (S m') = DropOne (dropAll m')
 
 -- | Convert a thinning into a list of booleans.
 toBools :: n :<= m -> [Bool]
-toBools = toBoolsThRep . (.thRep)
-{-# INLINE toBools #-}
+toBools = \case
+  KeepAll -> []
+  KeepOne n'm' -> False : toBools n'm'
+  DropOne nm' -> True : toBools nm'
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -196,57 +150,53 @@ data SomeTh
   , value :: n :<= m
   }
 
-emptySomeTh :: SomeTh
-emptySomeTh =
+instance NFData SomeTh where
+  rnf :: SomeTh -> ()
+  rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
+
+keepAllSomeTh :: SomeSNat -> SomeTh
+keepAllSomeTh (SomeSNat bound) =
   SomeTh
-    { lower = Z
-    , upper = Z
-    , value = Done
+    { lower = bound
+    , upper = bound
+    , value = KeepAll
     }
 
-keepSomeTh :: SomeTh -> SomeTh
-keepSomeTh SomeTh{..} =
+keepOneSomeTh :: SomeTh -> SomeTh
+keepOneSomeTh SomeTh{..} =
   SomeTh
     { lower = S lower
     , upper = S upper
-    , value = Keep value
+    , value = KeepOne value
     }
 
-dropSomeTh :: SomeTh -> SomeTh
-dropSomeTh SomeTh{..} =
+dropOneSomeTh :: SomeTh -> SomeTh
+dropOneSomeTh SomeTh{..} =
   SomeTh
     { lower = lower
     , upper = S upper
-    , value = Drop value
+    , value = DropOne value
     }
 
-fromBools :: [Bool] -> SomeTh
-fromBools [] = emptySomeTh
-fromBools (keepValue : rest)
-  | keepValue = keepSomeTh (fromBools rest)
-  | otherwise = dropSomeTh (fromBools rest)
+fromBools :: SomeSNat -> [Bool] -> SomeTh
+fromBools bound = go
+ where
+  go [] = keepAllSomeTh bound
+  go (False : bools) = keepOneSomeTh (go bools)
+  go (True : bools) = dropOneSomeTh (go bools)
 
-fromBits :: (Integral i, Bits bs) => (i, bs) -> SomeTh
-fromBits (upper, bits) = fromBools (testBit bits <$> [0 .. fromIntegral upper])
+fromBits :: (Bits bs) => SomeSNat -> bs -> SomeTh
+fromBits bound = go
+ where
+  go bits
+    | bits == zeroBits = keepAllSomeTh bound
+    | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
+    | otherwise = keepOneSomeTh (go (shift bits (-1)))
+{-# SPECIALIZE fromBits :: SomeSNat -> Integer -> SomeTh #-}
 
-fromBitsRaw :: (Int, Integer) -> SomeTh
-fromBitsRaw (upper, bits) = fromBools (testBit bits <$> [0 .. upper])
-
--- TODO: optimise fromBits with number juggling and lies
---
--- fromBits :: (Integral i, Bits bs) => (i, bs) -> SomeTh
--- fromBits (size, bits) = unsafeFromBitsRaw (sizeInt, copyBitsTo sizeInt bits)
---   where
---     sizeInt = fromIntegral @_ @Int size
---
--- fromBitsRaw :: (Int, Integer) -> SomeTh
--- fromBitsRaw (size, bits) = unsafeFromBitsRaw (size, copyBitsTo size bits)
---
--- unsafeFromBitsRaw :: (Int, Integer) -> SomeTh
--- unsafeFromBitsRaw (size, bits) = SomeTh {UnsafeTh (ThRep { size, bits  }))
---
--- copyBitsTo :: (Bits a, Bits b) => Int -> a -> b
--- copyBitsTo size bits = foldr (.|.) zeroBits [bit i | i <- [0..size], testBit bits i]
+-- TODO: Optimise 'fromBitsRaw' by using Integer as ThRep.
+fromBitsRaw :: SomeSNat -> Integer -> SomeTh
+fromBitsRaw = fromBits
 
 --------------------------------------------------------------------------------
 -- Thinning Class
@@ -262,26 +212,33 @@ instance Thin Ix where
   thin :: n :<= m -> Ix n -> Ix m
   thin !t !i = isPos i $
     case t of
-      Keep n'm' ->
+      KeepAll -> i
+      KeepOne n'm' ->
         case i of
           FZ -> FZ
           FS i' -> FS (thin n'm' i')
-      Drop nm' -> FS (thin nm' i)
+      DropOne nm' -> FS (thin nm' i)
 
   thick :: n :<= m -> Ix m -> Maybe (Ix n)
-  thick Done _i = Nothing
-  thick (Keep _n'm') FZ = Just FZ
-  thick (Keep n'm') (FS i') = FS <$> thick n'm' i'
-  thick (Drop _nm') FZ = Nothing
-  thick (Drop nm') (FS i') = thick nm' i'
+  thick KeepAll i = Just i
+  thick (KeepOne _n'm') FZ = Just FZ
+  thick (KeepOne n'm') (FS i') = FS <$> thick n'm' i'
+  thick (DropOne _nm') FZ = Nothing
+  thick (DropOne nm') (FS i') = thick nm' i'
 
 instance Thin ((:<=) l) where
   thin :: n :<= m -> l :<= n -> l :<= m
-  thin nm ln = UnsafeTh (thinThRep nm.thRep ln.thRep)
+  thin nm KeepAll = nm
+  thin KeepAll ln = ln
+  thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
+  thin (KeepOne n'm') (DropOne ln') = DropOne (thin n'm' ln')
+  thin (DropOne nm') ln = DropOne (thin nm' ln)
 
   thick :: n :<= m -> l :<= m -> Maybe (l :<= n)
-  thick Done Done = Just Done
-  thick (Keep n'm') (Keep l'n') = Keep <$> thick n'm' l'n'
-  thick (Keep n'm') (Drop ln') = Drop <$> thick n'm' ln'
-  thick (Drop _nm') (Keep _l'n') = Nothing
-  thick (Drop nm') (Drop ln') = thick nm' ln'
+  thick KeepAll lm = Just lm
+  thick (KeepOne n'm') KeepAll = KeepOne <$> thick n'm' KeepAll
+  thick (KeepOne n'm') (KeepOne l'n') = KeepOne <$> thick n'm' l'n'
+  thick (KeepOne n'm') (DropOne ln') = DropOne <$> thick n'm' ln'
+  thick (DropOne _nm') KeepAll = Nothing
+  thick (DropOne _nm') (KeepOne _l'n') = Nothing
+  thick (DropOne nm') (DropOne ln') = thick nm' ln'
