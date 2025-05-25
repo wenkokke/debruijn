@@ -196,7 +196,7 @@ fromBits bound = go
 {-# SPECIALIZE fromBits :: SomeSNat -> Integer -> SomeTh #-}
 
 -- TODO: Optimise 'fromBitsRaw' by using Integer as ThRep.
-fromBitsRaw :: SomeSNat -> Integer -> SomeTh
+fromBitsRaw :: SomeSNat -> ThRep -> SomeTh
 fromBitsRaw = fromBits
 
 --------------------------------------------------------------------------------
