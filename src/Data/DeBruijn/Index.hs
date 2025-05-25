@@ -19,7 +19,7 @@ module Data.DeBruijn.Index (
   fromSomeIxRaw,
 ) where
 
-import Data.DeBruijn.Index.Unsafe (
+import Data.DeBruijn.Index.Fast (
   Ix (FS, FZ),
   SomeIx (..),
   eqIx,

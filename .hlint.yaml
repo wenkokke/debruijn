@@ -18,19 +18,19 @@
     - name: "-Wno-orphans"
       within:
         - "Numeric.Natural.Arbitrary"
-        - "Data.DeBruijn.Index.Unsafe.Arbitrary"
-        - "Data.DeBruijn.Index.Inductive.Arbitrary"
-        - "Data.DeBruijn.Thinning.Unsafe.Arbitrary"
-        - "Data.DeBruijn.Thinning.Inductive.Arbitrary"
-        - "Data.Type.Nat.Singleton.Unsafe.Arbitrary"
-        - "Data.Type.Nat.Singleton.Inductive.Arbitrary"
+        - "Data.DeBruijn.Index.Fast.Arbitrary"
+        - "Data.DeBruijn.Index.Safe.Arbitrary"
+        - "Data.DeBruijn.Thinning.Fast.Arbitrary"
+        - "Data.DeBruijn.Thinning.Safe.Arbitrary"
+        - "Data.Type.Nat.Singleton.Fast.Arbitrary"
+        - "Data.Type.Nat.Singleton.Safe.Arbitrary"
     - name: "-Wno-duplicate-exports"
       within:
-        - "Data.DeBruijn.Index.Unsafe"
-        - "Data.DeBruijn.Environment.Unsafe"
-        - "Data.DeBruijn.Level.Unsafe"
-        - "Data.DeBruijn.Thinning.Unsafe"
-        - "Data.Type.Nat.Singleton.Unsafe"
+        - "Data.DeBruijn.Index.Fast"
+        - "Data.DeBruijn.Environment.Fast"
+        - "Data.DeBruijn.Level.Fast"
+        - "Data.DeBruijn.Thinning.Fast"
+        - "Data.Type.Nat.Singleton.Fast"
 
 # Control which modules can be used
 - modules:
