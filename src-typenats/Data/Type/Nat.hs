@@ -16,12 +16,14 @@ import Data.Kind (Constraint)
 type data Nat = Z | S Nat
 
 -- | Addition of type-level naturals.
-type family (+) (n :: Nat) (m :: Nat) :: Nat where
+type (+) :: Nat -> Nat -> Nat
+type family (+) n m where
   Z + m = m
   S n + m = S (n + m)
 
 -- | Predecessor of type-level naturals.
-type family Pred (n :: Nat) :: Nat where
+type Pred :: Nat -> Nat
+type family Pred n where
   Pred (S n) = n
 
 -- | @'Pos' n@ holds if @n@ is non-zero.
@@ -29,7 +31,8 @@ type Pos :: Nat -> Constraint
 type Pos (n :: Nat) = n ~ S (Pred n)
 
 -- | Less-than-or-equal for type-level naturals.
-type family (<=) (n :: Nat) (m :: Nat) :: Bool where
+type (<=) :: Nat -> Nat -> Bool
+type family (<=) n m where
   Z <= m = 'True
   S n <= Z = 'False
   S n <= S m = n <= m
