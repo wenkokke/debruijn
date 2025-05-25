@@ -25,7 +25,8 @@ module Data.DeBruijn.Thinning.Fast (
   Thin (..),
 
   -- * Fast
-  (:<=) (UnsafeTh),
+  ThRep,
+  (:<=) (UnsafeTh, thRep),
 ) where
 
 import Control.DeepSeq (NFData (..))
@@ -40,7 +41,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-#define ThRep Integer
+type ThRep = Integer
 
 mkKeepAllRep :: ThRep
 mkKeepAllRep = zeroBits

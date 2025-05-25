@@ -14,6 +14,7 @@ module Data.DeBruijn.Environment.Fast (
   (!),
 
   -- * Fast
+  EnvRep,
   Env (UnsafeEnv, envRep),
 ) where
 
@@ -47,7 +48,7 @@ import Data.Maybe (fromJust)
 --------------------------------------------------------------------------------
 -- Environment Representation: Skew List
 
-type EnvRep = SkewList
+type EnvRep a = SkewList a
 
 mkNilRep :: EnvRep a
 mkNilRep = SkewList.Nil
@@ -73,7 +74,7 @@ lookupRep = flip (SkewList.!)
 --------------------------------------------------------------------------------
 -- Environment Representation: Finger Tree
 
-type EnvRep = Seq
+type EnvRep a = Seq a
 
 mkNilRep :: EnvRep a
 mkNilRep = Seq.empty

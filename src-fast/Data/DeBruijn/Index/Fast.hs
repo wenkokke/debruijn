@@ -30,6 +30,7 @@ module Data.DeBruijn.Index.Fast (
   fromSomeIxRaw,
 
   -- * Fast
+  IxRep,
   Ix (UnsafeIx, ixRep),
 ) where
 
@@ -39,7 +40,7 @@ import Data.Kind (Type)
 import Data.Proxy (Proxy)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred, type (+))
-import Data.Type.Nat.Singleton.Fast (SNat (..), decSNat)
+import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, decSNat)
 import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -51,7 +52,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- DeBruijn Index Representation
 --------------------------------------------------------------------------------
 
-#define IxRep Int
+type IxRep = Int
 
 mkFZRep :: IxRep
 mkFZRep = 0
@@ -211,14 +212,14 @@ withSomeIx action (SomeIx n i) = action n i
 
 prop> toSomeIx (fromSomeIx i) == i
 -}
-toSomeIx :: (Integral i) => (i, i) -> SomeIx
+toSomeIx :: (Integral n, Integral i) => (n, i) -> SomeIx
 toSomeIx = toSomeIxRaw . bimap fromIntegral fromIntegral
 
 {-| @'toSomeIxRaw' n@ constructs the index @n@ at type @'Ix' n@ from the 'Int' @n@.
 
 prop> toSomeIxRaw (fromSomeIxRaw i) == i
 -}
-toSomeIxRaw :: (IxRep, IxRep) -> SomeIx
+toSomeIxRaw :: (SNatRep, IxRep) -> SomeIx
 toSomeIxRaw (n, i)
   | i < 0 = error $ printf "index cannot contain negative value, found index %d" i
   | n <= i = error $ printf "bound must be larger than index, found bound %d and index %d" n i
@@ -229,5 +230,5 @@ fromSomeIx :: (Integral i) => SomeIx -> (i, i)
 fromSomeIx = bimap fromIntegral fromIntegral . fromSomeIxRaw
 
 -- | @'fromSomeSNat' n@ returns the 'Int' representation of the wrapped index.
-fromSomeIxRaw :: SomeIx -> (IxRep, IxRep)
+fromSomeIxRaw :: SomeIx -> (SNatRep, IxRep)
 fromSomeIxRaw (SomeIx (UnsafeSNat bound) (UnsafeIx index)) = (bound, index)

@@ -38,6 +38,7 @@ module Data.Type.Nat.Singleton.Fast (
   withKnownNat,
 
   -- * Fast
+  SNatRep,
   SNat (UnsafeSNat, snatRep),
 ) where
 
@@ -60,22 +61,24 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Natural Number Singleton Representation
 --------------------------------------------------------------------------------
 
-isValidSNatRep :: Int -> Bool
+type SNatRep = Int
+
+isValidSNatRep :: SNatRep -> Bool
 isValidSNatRep = (>= 0)
 
-mkZRep :: Int
+mkZRep :: SNatRep
 mkZRep = 0
 {-# INLINE mkZRep #-}
 
-mkSRep :: Int -> Int
+mkSRep :: SNatRep -> SNatRep
 mkSRep = (1 +)
 {-# INLINE mkSRep #-}
 
-unSRep :: Int -> Int
+unSRep :: SNatRep -> SNatRep
 unSRep = subtract 1
 {-# INLINE unSRep #-}
 
-elSNatRep :: a -> (Int -> a) -> Int -> a
+elSNatRep :: a -> (SNatRep -> a) -> SNatRep -> a
 elSNatRep ifZ ifS n =
   assert (isValidSNatRep n) $
     if n == mkZRep
@@ -89,7 +92,7 @@ elSNatRep ifZ ifS n =
 
 -- | @'SNat' n@ is the singleton type for natural numbers.
 type SNat :: Nat -> Type
-newtype SNat n = UnsafeSNat {snatRep :: Int}
+newtype SNat n = UnsafeSNat {snatRep :: SNatRep}
 
 instance NFData (SNat n) where
   rnf :: SNat n -> ()
@@ -110,7 +113,7 @@ fromSNat :: (Integral i) => SNat n -> i
 fromSNat = fromInteger . toInteger . (.snatRep)
 
 -- | @'fromSNatRaw' n@ returns the raw underlying representation of 'SNat n'.
-fromSNatRaw :: SNat n -> Int
+fromSNatRaw :: SNat n -> SNatRep
 fromSNatRaw = (.snatRep)
 
 instance Show (SNat n) where
@@ -191,7 +194,7 @@ toSomeSNat r
 
 prop> toSomeSNatRaw (fromSomeSNatRaw n) == n
 -}
-toSomeSNatRaw :: Int -> SomeSNat
+toSomeSNatRaw :: SNatRep -> SomeSNat
 toSomeSNatRaw r
   | r < 0 = error $ printf "cannot convert %d to natural number singleton"
   | otherwise = SomeSNat (UnsafeSNat r)
@@ -201,7 +204,7 @@ fromSomeSNat :: (Integral i) => SomeSNat -> i
 fromSomeSNat = withSomeSNat fromSNat
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped singleton.
-fromSomeSNatRaw :: SomeSNat -> Int
+fromSomeSNatRaw :: SomeSNat -> SNatRep
 fromSomeSNatRaw (SomeSNat (UnsafeSNat r)) = r
 
 --------------------------------------------------------------------------------
