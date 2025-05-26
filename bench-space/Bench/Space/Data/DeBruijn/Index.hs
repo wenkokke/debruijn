@@ -40,8 +40,10 @@ bench_thinArgs = nub (varyingParameter0 <> varyingParameter1)
  where
   varyingParameter0 =
     [ (101, i, j)
-    | i <- [0, 10 .. 100]
-    , j <- [0, i - 1, i, i + 1, 100]
+    | n <- [0, 5 .. 100]
+    , i <- [0, n - 1, n, n + 1, 100]
+    , 0 <= i && i < 101
+    , j <- [0, n - 1, n, n + 1, 100]
     , 0 <= j && j < 101
     ]
   varyingParameter1 =
@@ -69,8 +71,10 @@ bench_thickArgs = nub (varyingParameter0 <> varyingParameter1)
  where
   varyingParameter0 =
     [ (101, i, j)
-    | i <- [0, 10 .. 100]
-    , j <- [0, i - 1, i, i + 1, 100]
+    | n <- [0, 5 .. 100]
+    , i <- [0, n - 1, n, n + 1, 100]
+    , 0 <= i && i < 101
+    , j <- [0, n - 1, n, n + 1, 100]
     , 0 <= j && j < 101
     ]
   varyingParameter1 =
