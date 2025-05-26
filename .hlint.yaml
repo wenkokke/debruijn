@@ -75,8 +75,8 @@
 
 # Add custom hints for this project
 #
-# Will suggest replacing "wibbleMany [myvar]" with "wibbleOne myvar"
-# - error: {lhs: "wibbleMany [x]", rhs: wibbleOne x}
+# Prefer 'pure' over 'return'
+- error: { note: "Prefer pure over return", lhs: return, rhs: pure }
 
 # The hints are named by the string they display in warning messages.
 # For example, if you see a warning starting like
