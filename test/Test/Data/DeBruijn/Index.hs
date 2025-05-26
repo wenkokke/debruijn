@@ -8,9 +8,9 @@ import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.DeBruijn.Index.Safe qualified as Fast (fromInductive, toInductive)
 import Data.DeBruijn.Index.Safe qualified as Safe
 import Data.DeBruijn.Index.Safe.Arbitrary ()
-import Data.Proxy (Proxy (..))
 import Data.Type.Nat.Singleton.Safe (SNat (..))
-import Data.Type.Nat.Singleton.Safe qualified as Safe (SomeSNat (..), decSNat)
+import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive)
+import Data.Type.Nat.Singleton.Safe qualified as SNat.Safe (SomeSNat (..), decSNat)
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (NonNegative (..), Positive (..), Property, counterexample, once, testProperty)
@@ -71,10 +71,10 @@ test_fromIxEq (Safe.SomeIx _ i) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-test_injectEq :: Safe.SomeSNat -> Safe.SomeIx -> Property
-test_injectEq (Safe.SomeSNat n) (Safe.SomeIx _ i) = do
-  let expect = Safe.inject n i
-  let actual = Fast.toInductive (Fast.inject (erase n) (Fast.fromInductive i))
+test_injectEq :: Safe.SomeIx -> SNat.Safe.SomeSNat -> Property
+test_injectEq (Safe.SomeIx _ i) (SNat.Safe.SomeSNat m) = do
+  let expect = Safe.inject i m
+  let actual = Fast.toInductive (Fast.inject (Fast.fromInductive i) (SNat.Fast.fromInductive m))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -83,7 +83,7 @@ test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw + 1, iRaw)
   , Safe.SomeIx n' j <- Safe.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Safe.decSNat n n' = do
+  , Just Refl <- SNat.Safe.decSNat n n' = do
       let expect = Safe.thin i j
       let actual = Fast.toInductive (Fast.thin (Fast.fromInductive i) (Fast.fromInductive j))
       counterexample (printf "%s == %s" (show expect) (show actual)) $
@@ -95,18 +95,9 @@ test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | let nRaw = dRaw + (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw, iRaw)
   , Safe.SomeIx (S n') j <- Safe.toSomeIxRaw (nRaw, jRaw)
-  , Just Refl <- Safe.decSNat n n' = do
+  , Just Refl <- SNat.Safe.decSNat n n' = do
       let expect = Safe.thick i j
       let actual = Fast.toInductive <$> Fast.thick (Fast.fromInductive i) (Fast.fromInductive j)
       counterexample (printf "%s == %s" (show expect) (show actual)) $
         expect == actual
   | otherwise = error "test_thinEq: could not construct test"
-
---------------------------------------------------------------------------------
--- Helper Functions
---------------------------------------------------------------------------------
-
--- | @`erase` x@ erases the content of @x@ to a @`Proxy`@.
-erase :: f a -> Proxy a
-erase _ = Proxy
-{-# INLINE erase #-}
