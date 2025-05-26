@@ -37,7 +37,6 @@ module Data.DeBruijn.Index.Fast (
 import Control.DeepSeq (NFData (..))
 import Data.Bifunctor (Bifunctor (..))
 import Data.Kind (Type)
-import Data.Proxy (Proxy)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred, type (+))
 import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, decSNat)
@@ -175,8 +174,8 @@ thick :: Ix (S n) -> Ix (S n) -> Maybe (Ix n)
 thick i j = UnsafeIx <$> thickRep i.ixRep j.ixRep
 
 -- | Inject.
-inject :: Proxy n -> Ix m -> Ix (n + m)
-inject _ j = UnsafeIx j.ixRep
+inject :: Ix n -> SNat m -> Ix (n + m)
+inject i _m = UnsafeIx i.ixRep
 
 -- | Raise.
 raise :: SNat n -> Ix m -> Ix (n + m)

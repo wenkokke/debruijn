@@ -16,6 +16,7 @@ module Data.DeBruijn.Index.Safe (
   thin,
   thick,
   inject,
+  raise,
 
   -- * Existential Wrapper
   SomeIx (..),
@@ -29,10 +30,9 @@ module Data.DeBruijn.Index.Safe (
 import Control.DeepSeq (NFData (..))
 import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.Kind (Type)
-import Data.Proxy (Proxy (..))
 import Data.Type.Equality ((:~:) (Refl))
 import Data.Type.Nat (type Nat (..), type Pos, type (+))
-import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), decSNat, fromSNat, fromSNatRaw, plusCommS, toSomeSNat)
+import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), decSNat, fromSNat, fromSNatRaw, plusUnitR, toSomeSNat)
 import Text.Printf (printf)
 
 {- $setup
@@ -110,21 +110,14 @@ thick (FS i) FZ = isPos i $ Just FZ
 thick (FS i) (FS j) = isPos i $ FS <$> thick i j
 
 -- | Inject.
-inject :: SNat n -> Ix m -> Ix (n + m)
-inject Z i = i
-inject (S _) FZ = FZ
-inject n (FS i) =
-  case plusCommS n (erase i) of
-    Refl -> FS (inject n i)
+inject :: Ix n -> SNat m -> Ix (n + m)
+inject FZ m = case plusUnitR m of Refl -> FZ
+inject (FS i) n = FS (inject i n)
 
-{-| Raise.
-NOTE: Requires @'Ix' n -> 'SNat' n@, which is unprovable,
-      since 'Ix' does not contain sufficient information to
-      reconstruct the upper bound.
-raise :: Ix n -> SNat m -> Ix (n + m)
-raise i Z = _
-raise i (S n) = _
--}
+-- | Raise.
+raise :: SNat n -> Ix m -> Ix (n + m)
+raise Z j = j
+raise (S n) j = FS (raise n j)
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -177,12 +170,3 @@ fromSomeIx = withSomeIx (\n i -> (fromSNat n, fromIx i))
 -- | @'fromSomeSNat' n@ returns the 'Int' representation of the wrapped index.
 fromSomeIxRaw :: SomeIx -> (Int, Int)
 fromSomeIxRaw = withSomeIx (\n i -> (fromSNatRaw n, fromIxRaw i))
-
---------------------------------------------------------------------------------
--- Helper Functions
---------------------------------------------------------------------------------
-
--- | @`erase` x@ erases the content of @x@ to a @`Proxy`@.
-erase :: f a -> Proxy a
-erase _ = Proxy
-{-# INLINE erase #-}
