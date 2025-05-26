@@ -137,7 +137,7 @@ library arbitrary
     , data-debruijn:typenats
     , QuickCheck              >=2.9 && <3.0
 
-test-suite data-debruijn-test
+test-suite test-fast-is-safe
   import:         language
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
@@ -155,30 +155,28 @@ test-suite data-debruijn-test
     , tasty
     , tasty-quickcheck
 
-benchmark data-debruijn-bench-time
+benchmark bench-time
   import:         language
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   hs-source-dirs: bench-time
   other-modules:  Bench.Time.Data.DeBruijn.Index
   build-depends:
-    , base
-    , criterion           ^>=1.6
-    , data-debruijn:fast
-    , data-debruijn:safe
-    , deepseq             ^>=1.5
+    , base           >=4.18 && <5
+    , criterion      ^>=1.6
+    , data-debruijn
+    , deepseq        ^>=1.5
 
-benchmark data-debruijn-bench-space
+benchmark bench-space
   import:         language
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   hs-source-dirs: bench-space
   other-modules:  Bench.Space.Data.DeBruijn.Index
   build-depends:
-    , base
+    , base           >=4.18    && <5
     , bytestring
-    , cassava             ^>=0.5
-    , data-debruijn:fast
-    , data-debruijn:safe
-    , deepseq             ^>=1.5
-    , weigh               ^>=0.0.18
+    , cassava        ^>=0.5
+    , data-debruijn
+    , deepseq        ^>=1.5
+    , weigh          ^>=0.0.18
