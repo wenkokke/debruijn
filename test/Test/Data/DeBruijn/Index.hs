@@ -27,6 +27,7 @@ tests =
     , testProperty "test_fromIxRawEq" test_fromIxRawEq
     , testProperty "test_fromIxEq" test_fromIxEq
     , testProperty "test_injectEq" test_injectEq
+    , testProperty "test_raiseEq" test_raiseEq
     , testProperty "test_thinEq" test_thinEq
     , testProperty "test_thickEq" test_thickEq
     ]
@@ -75,6 +76,13 @@ test_injectEq :: Safe.SomeIx -> SNat.Safe.SomeSNat -> Property
 test_injectEq (Safe.SomeIx _ i) (SNat.Safe.SomeSNat m) = do
   let expect = Safe.inject i m
   let actual = Fast.toInductive (Fast.inject (Fast.fromInductive i) (SNat.Fast.fromInductive m))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
+
+test_raiseEq :: SNat.Safe.SomeSNat -> Safe.SomeIx -> Property
+test_raiseEq (SNat.Safe.SomeSNat n) (Safe.SomeIx _ j) = do
+  let expect = Safe.raise n j
+  let actual = Fast.toInductive (Fast.raise (SNat.Fast.fromInductive n) (Fast.fromInductive j))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
