@@ -1,0 +1,4 @@
+import: cabal.project
+
+package data-debruijn
+  flags: +safe
