@@ -7,7 +7,7 @@ module Data.DeBruijn.Environment (
 ) where
 
 #ifdef EXPORT_SAFE_API
-import Data.DeBruijn.Environment.Fast (
+import Data.DeBruijn.Environment.Safe (
   Env (Nil, (:>)),
   (!),
  )
