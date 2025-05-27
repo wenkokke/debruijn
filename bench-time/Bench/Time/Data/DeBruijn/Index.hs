@@ -71,7 +71,7 @@ bench_thickWith (nRaw, iRaw, jRaw)
   | otherwise = error (printf "bench_thickWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
 bench_thickArgs :: [(Int, Int, Int)]
-bench_thickArgs = nub (varyingParameter0 <> varyingParameter1)
+bench_thickArgs = nub (varyingParameter0 <> varyingParameter1 <> alongTheDiagonal)
  where
   varyingParameter0 =
     [ (101, i, j)
@@ -84,3 +84,7 @@ bench_thickArgs = nub (varyingParameter0 <> varyingParameter1)
   varyingParameter1 =
     varyingParameter0
       <&> (\(n, j, i) -> (n, i, j))
+  alongTheDiagonal =
+    [ (101, i, i)
+    | i <- [0..100]
+    ]
