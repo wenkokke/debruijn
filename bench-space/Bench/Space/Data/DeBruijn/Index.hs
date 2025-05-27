@@ -6,7 +6,6 @@ module Bench.Space.Data.DeBruijn.Index where
 import Control.DeepSeq (force)
 import Data.DeBruijn.Index (SomeIx (..), thick, thin, toSomeIxRaw)
 import Data.Foldable (traverse_)
-import Data.Functor ((<&>))
 import Data.List (nub)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat.Singleton (SNat (..), decSNat)
@@ -36,19 +35,17 @@ bench_thinWith (nRaw, iRaw, jRaw)
   | otherwise = error (printf "bench_thinWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
 bench_thinArgs :: [(Int, Int, Int)]
-bench_thinArgs = nub (varyingParameter0 <> varyingParameter1)
+bench_thinArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
-  varyingParameter0 =
+  evenSpreadBy5 =
     [ (101, i, j)
-    | n <- [0, 5 .. 100]
-    , i <- [0, n - 1, n, n + 1, 100]
-    , 0 <= i && i < 101
-    , j <- [0, n - 1, n, n + 1, 100]
-    , 0 <= j && j < 101
+    | i <- [0, 5 .. 100]
+    , j <- [0, 5 .. 100]
     ]
-  varyingParameter1 =
-    varyingParameter0
-      <&> (\(n, j, i) -> (n, i, j))
+  alongTheDiagonal =
+    [ (101, i, i)
+    | i <- [0 .. 100]
+    ]
 
 --------------------------------------------------------------------------------
 -- Benchmark: thick
@@ -67,20 +64,14 @@ bench_thickWith (nRaw, iRaw, jRaw)
   | otherwise = error (printf "bench_thickWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
 bench_thickArgs :: [(Int, Int, Int)]
-bench_thickArgs = nub (varyingParameter0 <> varyingParameter1 <> alongTheDiagonal)
+bench_thickArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
-  varyingParameter0 =
+  evenSpreadBy5 =
     [ (101, i, j)
-    | n <- [0, 5 .. 100]
-    , i <- [0, n - 1, n, n + 1, 100]
-    , 0 <= i && i < 101
-    , j <- [0, n - 1, n, n + 1, 100]
-    , 0 <= j && j < 101
+    | i <- [0, 5 .. 100]
+    , j <- [0, 5 .. 100]
     ]
-  varyingParameter1 =
-    varyingParameter0
-      <&> (\(n, j, i) -> (n, i, j))
   alongTheDiagonal =
     [ (101, i, i)
-    | i <- [0..100]
+    | i <- [0 .. 100]
     ]
