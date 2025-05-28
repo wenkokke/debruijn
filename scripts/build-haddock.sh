@@ -1,42 +1,50 @@
-#!/bin/sh
+#!/bin/sh -e
 
-# Check for Haddock
-HADDOCK_EXPECT_VERSION=$(awk -F'=' '/^haddock=/{print$2}' ./scripts/dev-dependencies.txt)
+# Read the expected version:
+EXPECT_VERSION="$(awk -F'=' '/^haddock=/{print$2}' ./scripts/dev-dependencies.txt)"
+
+# Find haddock:
+#
+# 1. Use HADDOCK if it is set.
+# 2. Look for haddock-$EXPECTED_VERSION.
+# 3. Look for haddock.
+#
 if [ "${HADDOCK}" = "" ]; then
-    HADDOCK=$(which "haddock")
-    if [ "${HADDOCK}" = "" ]; then
-        echo "Requires haddock ${HADDOCK_EXPECT_VERSION}; no version found"
-        exit 1
+  if ! HADDOCK="$(which "haddock-${EXPECT_VERSION}")"; then
+    if ! HADDOCK="$(which "haddock")"; then
+      echo "Requires haddock ${EXPECT_VERSION}; no version found"
+      echo "To install, run:"
+      echo
+      echo "  cabal install haddock-${EXPECT_VERSION}"
+      echo
+      exit 1
     fi
+  fi
 fi
-HADDOCK_VERSION_ACTUAL=$(${HADDOCK} --version | head -n 1 | cut -d' ' -f3 | sed -E 's/(.*),/\1/')
-if [ ! "${HADDOCK_VERSION_ACTUAL}" = "${HADDOCK_EXPECT_VERSION}" ]; then
-    echo "Requires haddock ${HADDOCK_EXPECT_VERSION}; version ${HADDOCK_VERSION_ACTUAL} found"
-    exit 1
+
+# Check haddock version:
+ACTUAL_VERSION="$("${HADDOCK}" --version | head -n 1 | cut -d' ' -f3 | sed -E 's/(.*),/\1/')"
+if [ "${ACTUAL_VERSION}" != "${EXPECT_VERSION}" ]; then
+  echo "Requires haddock ${EXPECT_VERSION}; version ${ACTUAL_VERSION} found"
+  # Version mismatch is an error on CI:
+  [ "${CI}" = "" ] || exit 1
 fi
 
 # Build the Haddock documentation for all local packages.
 # NOTE(cabal.project): This relies on the configuration under 'Documentation' in cabal.project.
-if ! cabal haddock all; then
-    exit 1
-fi
+cabal haddock all
 
 # Create the './doc/reference' directory
-if ! mkdir -p "./doc/reference/"; then
-    exit 1
-fi
+mkdir -p "./doc/reference/"
+
 # Copy the Haddock documentation for each local package to the './doc/reference' directory
-if ! find "./dist-newstyle/build" -type d -and -name "html" -exec cp -r {} ./doc/reference/ ';'; then
-    exit 1
-fi
+find "./dist-newstyle/build" -type d -and -name "html" -exec cp -r {} ./doc/reference/ ';'
 
 # Build the Haddock documentation index
 # NOTE(newpackage): This command must have one --read-interface argument for each package.
-if ! ${HADDOCK} \
+${HADDOCK} \
   -o ./doc/reference \
   --quickjump \
   --gen-index \
   --gen-contents \
-  --read-interface=data-debruijn,./doc/reference/html/data-debruijn/data-debruijn.haddock; then
-  exit 1
-fi
+  --read-interface=data-debruijn,./doc/reference/html/data-debruijn/data-debruijn.haddock
