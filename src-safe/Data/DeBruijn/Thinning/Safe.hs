@@ -32,7 +32,7 @@ import Data.DeBruijn.Index.Safe (Ix (..), isPos)
 import Data.DeBruijn.Thinning.Fast qualified as Fast
 import Data.Kind (Constraint, Type)
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..))
+import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), toSomeSNat)
 
 --------------------------------------------------------------------------------
 -- Thinnings
@@ -160,16 +160,16 @@ fromBools bound = go
   go (False : bools) = keepOneSomeTh (go bools)
   go (True : bools) = dropOneSomeTh (go bools)
 
-toSomeTh :: (Bits bs) => SomeSNat -> bs -> SomeTh
+toSomeTh :: (Integral i, Bits bs) => i -> bs -> SomeTh
 toSomeTh bound = go
  where
   go bits
-    | bits == zeroBits = keepAllSomeTh bound
+    | bits == zeroBits = keepAllSomeTh (toSomeSNat bound)
     | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
     | otherwise = keepOneSomeTh (go (shift bits (-1)))
-{-# SPECIALIZE toSomeTh :: SomeSNat -> Integer -> SomeTh #-}
+{-# SPECIALIZE toSomeTh :: Int -> Integer -> SomeTh #-}
 
-toSomeThRaw :: SomeSNat -> Integer -> SomeTh
+toSomeThRaw :: Int -> Integer -> SomeTh
 toSomeThRaw = toSomeTh
 
 withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
