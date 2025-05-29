@@ -112,6 +112,7 @@
     within:
       - "Bench.Space.Data.DeBruijn.Index"
       - "Bench.Time.Data.DeBruijn.Index"
+      - "Bench.Time.Data.DeBruijn.Thinning"
 # Define some custom infix operators
 # - fixity: infixr 3 ~^#^~
 

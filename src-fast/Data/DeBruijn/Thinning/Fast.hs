@@ -203,16 +203,16 @@ fromBools bound = go
 {-# SPECIALIZE fromBools :: SNatRep -> [Bool] -> SomeTh #-}
 
 toSomeTh :: (Integral i, Bits bs) => i -> bs -> SomeTh
-toSomeTh nRep thRep = toSomeThRaw (fromIntegral nRep) (copyBits thRep)
+toSomeTh nRep nmRep = toSomeThRaw (fromIntegral nRep) (copyBits nmRep)
 {-# SPECIALIZE toSomeTh :: SNatRep -> ThRep -> SomeTh #-}
 
 toSomeThRaw :: SNatRep -> ThRep -> SomeTh
-toSomeThRaw nRep thRep
+toSomeThRaw nRep nmRep
   | SomeSNat n <- toSomeSNatRaw nRep
-  , let dRep = popCount thRep
+  , let dRep = popCount nmRep
   , SomeSNat d <- toSomeSNatRaw dRep
   , let m = n `plus` d
-  , let nm = UnsafeTh thRep =
+  , let nm = UnsafeTh nmRep =
       SomeTh n m nm
 
 withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
