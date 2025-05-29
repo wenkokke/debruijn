@@ -28,7 +28,7 @@ if [ "${PRETTIER}" = "" ]; then
 fi
 
 # Check prettier version:
-ACTUAL_VERSION="$(NODE_NO_WARNINGS=1 ${PRETTIER} --version | head -n 1)"
+ACTUAL_VERSION="$(NODE_NO_WARNINGS=1 yes | ${PRETTIER} --version | head -n 1)"
 if [ "${ACTUAL_VERSION}" != "${EXPECT_VERSION}" ]; then
   echo "Requires prettier ${EXPECT_VERSION}; version ${ACTUAL_VERSION} found"
   # Version mismatch is an error on CI:
