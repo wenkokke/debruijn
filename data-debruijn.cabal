@@ -160,7 +160,11 @@ benchmark bench-time
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   hs-source-dirs: bench-time
-  other-modules:  Bench.Time.Data.DeBruijn.Index
+  other-modules:
+    Bench.Time.Data.DeBruijn.Index
+    Bench.Time.Data.DeBruijn.Thinning
+    Bench.Time.Data.DeBruijn.Thinning.Samples
+
   build-depends:
     , base           >=4.18 && <5
     , criterion      ^>=1.6
