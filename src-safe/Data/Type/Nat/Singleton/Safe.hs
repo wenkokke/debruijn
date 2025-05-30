@@ -207,5 +207,5 @@ erase _ = Proxy
 -- | @`iterate'` i f@ applies @f@ @i@ times.
 iterate' :: (Integral i) => i -> (a -> a) -> a -> a
 iterate' i f x
-  | i == 0 = x
+  | i <= 0 = x
   | otherwise = iterate' (i - 1) f $! f x
