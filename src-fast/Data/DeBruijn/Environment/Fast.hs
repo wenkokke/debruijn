@@ -27,7 +27,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Conditional Imports
 --------------------------------------------------------------------------------
 
-#ifdef SKEW_LIST
+#ifdef ENV_AS_SKEW_LIST
 
 import Data.SkewList.Strict (SkewList)
 import Data.SkewList.Strict qualified as SkewList
@@ -43,7 +43,7 @@ import Data.Maybe (fromJust)
 --------------------------------------------------------------------------------
 -- Environment Representation
 --------------------------------------------------------------------------------
-#ifdef SKEW_LIST
+#ifdef ENV_AS_SKEW_LIST
 
 --------------------------------------------------------------------------------
 -- Environment Representation: Skew List

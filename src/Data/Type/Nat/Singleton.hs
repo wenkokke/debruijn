@@ -15,6 +15,9 @@ module Data.Type.Nat.Singleton (
   toSomeSNatRaw,
   fromSomeSNat,
   fromSomeSNatRaw,
+
+  -- * Specialised target for conversion
+  SNatRep,
 ) where
 
 #ifdef EXPORT_SAFE_API
@@ -30,6 +33,7 @@ import Data.Type.Nat.Singleton.Safe (
   toSomeSNat,
   toSomeSNatRaw,
   withSomeSNat,
+  SNatRep,
  )
 #else
 import Data.Type.Nat.Singleton.Fast (
@@ -44,5 +48,6 @@ import Data.Type.Nat.Singleton.Fast (
   toSomeSNat,
   toSomeSNatRaw,
   withSomeSNat,
+  SNatRep,
  )
 #endif
