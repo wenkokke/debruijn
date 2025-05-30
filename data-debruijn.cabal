@@ -123,6 +123,7 @@ library arbitrary
   visibility:      public
   hs-source-dirs:  src-arbitrary
   exposed-modules:
+    Data.DeBruijn.Index.Arbitrary
     Data.DeBruijn.Index.Fast.Arbitrary
     Data.DeBruijn.Index.Safe.Arbitrary
     Data.DeBruijn.Thinning.Safe.Arbitrary
