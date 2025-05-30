@@ -175,13 +175,11 @@ fromBools bound = go
   go (False : bools) = keepOneSomeTh (go bools)
   go (True : bools) = dropOneSomeTh (go bools)
 
-toSomeTh :: (Integral i, Bits bs) => (i, bs) -> SomeTh
-toSomeTh (nRep, nmRep) = go nmRep
- where
-  go bits
-    | bits == zeroBits = keepAllSomeTh (toSomeSNat nRep)
-    | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
-    | otherwise = keepOneSomeTh (go (shift bits (-1)))
+toSomeTh :: (Show i, Show bs, Integral i, Bits bs) => (i, bs) -> SomeTh
+toSomeTh (nRep, nmRep)
+  | nmRep == zeroBits = keepAllSomeTh (toSomeSNat nRep)
+  | testBit nmRep 0 = dropOneSomeTh (toSomeTh (nRep, shift nmRep (-1)))
+  | otherwise = keepOneSomeTh (toSomeTh (nRep - 1, shift nmRep (-1)))
 {-# SPECIALIZE toSomeTh :: (SNatRep, ThRep) -> SomeTh #-}
 
 toSomeThRaw :: (SNatRep, ThRep) -> SomeTh

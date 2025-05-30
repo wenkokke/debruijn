@@ -178,7 +178,7 @@ test_fromSomeThRawEq (Safe.SomeTh n m nm) = do
 
 -- | Test: @toSomeTh@.
 test_toSomeThEq :: SomeThRep -> Property
-test_toSomeThEq (SomeThRep nRep _mRep nmRep) = do
+test_toSomeThEq (SomeThRep nRep nmRep) = do
   let expect = Safe.toSomeTh (nRep, nmRep)
   let actual = Fast.toSomeTh (nRep, nmRep)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
@@ -190,7 +190,7 @@ test_toSomeThEq (SomeThRep nRep _mRep nmRep) = do
 
 -- | Test: @toSomeThRaw@.
 test_toSomeThRawEq :: SomeThRep -> Property
-test_toSomeThRawEq (SomeThRep nRep _mRep nmRep) = do
+test_toSomeThRawEq (SomeThRep nRep nmRep) = do
   let expect = Safe.toSomeThRaw (nRep, nmRep)
   let actual = Fast.toSomeThRaw (nRep, nmRep)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
@@ -211,7 +211,7 @@ test_Fast_fromSomeTh_eq_fromSomeThRaw nm =
 
 -- | Test: @toSomeTh == toSomeThRaw@.
 test_Fast_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Bool
-test_Fast_toSomeTh_eq_toSomeThRaw (SomeThRep nRep _mRep nmRep) =
+test_Fast_toSomeTh_eq_toSomeThRaw (SomeThRep nRep nmRep) =
   Fast.toSomeTh (nRep, nmRep) == Fast.toSomeThRaw (nRep, nmRep)
 
 -- | Test: @toSomeThRaw . fromSomeThRaw == id@.
@@ -221,7 +221,7 @@ test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id nm =
 
 -- | Test: @fromSomeThRaw . toSomeThRaw == id@.
 test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Bool
-test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep _mRep iRep) =
+test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep iRep) =
   Fast.fromSomeThRaw (Fast.toSomeThRaw (nRep, iRep)) == (nRep, iRep)
 
 -- Corollary: @toSomeTh . fromSomeTh == id@.
@@ -239,7 +239,7 @@ test_Safe_fromSomeTh_eq_fromSomeThRaw nm =
 
 -- | Test: @toSomeTh == toSomeThRaw@.
 test_Safe_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Bool
-test_Safe_toSomeTh_eq_toSomeThRaw (SomeThRep nRep _mRep nmRep) =
+test_Safe_toSomeTh_eq_toSomeThRaw (SomeThRep nRep nmRep) =
   Safe.toSomeTh (nRep, nmRep) == Safe.toSomeThRaw (nRep, nmRep)
 
 -- | Test: @toSomeThRaw . fromSomeThRaw == id@.
@@ -249,7 +249,7 @@ test_Safe_toSomeThRaw_o_fromSomeThRaw_eq_id nm =
 
 -- | Test: @fromSomeThRaw . toSomeThRaw == id@.
 test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Bool
-test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep _mRep iRep) =
+test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep iRep) =
   Safe.fromSomeThRaw (Safe.toSomeThRaw (nRep, iRep)) == (nRep, iRep)
 
 -- Corollary: @toSomeTh . fromSomeTh == id@.
