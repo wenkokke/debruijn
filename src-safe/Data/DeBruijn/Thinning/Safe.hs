@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
@@ -24,15 +25,21 @@ module Data.DeBruijn.Thinning.Safe (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
+
+  -- * Specialised target for conversion
+  ThRep,
 ) where
 
 import Control.DeepSeq (NFData (..))
 import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Safe (Ix (..), isPos)
+import Data.DeBruijn.Thinning.Fast (ThRep)
 import Data.DeBruijn.Thinning.Fast qualified as Fast
 import Data.Kind (Constraint, Type)
+import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), toSomeSNat)
+import Data.Type.Nat.Singleton.Fast (SNatRep)
+import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), decSNat, fromSNat, toSomeSNat)
 
 --------------------------------------------------------------------------------
 -- Thinnings
@@ -123,6 +130,14 @@ data SomeTh
   , value :: n :<= m
   }
 
+instance Eq SomeTh where
+  (==) :: SomeTh -> SomeTh -> Bool
+  SomeTh n1 m1 n1m1 == SomeTh n2 m2 n2m2
+    | Just Refl <- decSNat n1 n2
+    , Just Refl <- decSNat m1 m2 =
+        n1m1 == n2m2
+    | otherwise = False
+
 deriving stock instance Show SomeTh
 
 instance NFData SomeTh where
@@ -160,26 +175,27 @@ fromBools bound = go
   go (False : bools) = keepOneSomeTh (go bools)
   go (True : bools) = dropOneSomeTh (go bools)
 
-toSomeTh :: (Integral i, Bits bs) => i -> bs -> SomeTh
-toSomeTh bound = go
+toSomeTh :: (Integral i, Bits bs) => (i, bs) -> SomeTh
+toSomeTh (nRep, nmRep) = go nmRep
  where
   go bits
-    | bits == zeroBits = keepAllSomeTh (toSomeSNat bound)
+    | bits == zeroBits = keepAllSomeTh (toSomeSNat nRep)
     | testBit bits 0 = dropOneSomeTh (go (shift bits (-1)))
     | otherwise = keepOneSomeTh (go (shift bits (-1)))
-{-# SPECIALIZE toSomeTh :: Int -> Integer -> SomeTh #-}
+{-# SPECIALIZE toSomeTh :: (SNatRep, ThRep) -> SomeTh #-}
 
-toSomeThRaw :: Int -> Integer -> SomeTh
+toSomeThRaw :: (SNatRep, ThRep) -> SomeTh
 toSomeThRaw = toSomeTh
 
 withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
 withSomeTh action (SomeTh n m nm) = action n m nm
 
-fromSomeTh :: (Bits bs) => SomeTh -> bs
-fromSomeTh = withSomeTh (\_ _ -> fromTh)
+fromSomeTh :: (Integral i, Bits bs) => SomeTh -> (i, bs)
+fromSomeTh = withSomeTh (\n _m nm -> (fromSNat n, fromTh nm))
+{-# SPECIALIZE fromSomeTh :: SomeTh -> (SNatRep, ThRep) #-}
 
-fromSomeThRaw :: SomeTh -> Integer
-fromSomeThRaw = withSomeTh (\_ _ -> fromThRaw)
+fromSomeThRaw :: SomeTh -> (SNatRep, ThRep)
+fromSomeThRaw = fromSomeTh
 
 --------------------------------------------------------------------------------
 -- Thinning Class

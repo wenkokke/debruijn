@@ -48,7 +48,7 @@ import Control.Exception (assert)
 import Data.Kind (Constraint, Type)
 import Data.Maybe (isJust)
 import Data.Proxy (Proxy (..))
-import Data.Type.Equality ((:~:) (Refl))
+import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred, type (+))
 import GHC.TypeLits qualified as GHC
 import Text.Printf (printf)

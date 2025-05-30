@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
@@ -34,11 +35,13 @@ module Data.DeBruijn.Thinning.Fast (
 ) where
 
 import Control.DeepSeq (NFData (..))
+import Data.Bifunctor (Bifunctor (..))
 import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Fast (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
+import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), plus, toSomeSNat, toSomeSNatRaw)
+import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
 --------------------------------------------------------------------------------
@@ -166,6 +169,16 @@ data SomeTh
   , value :: n :<= m
   }
 
+instance Eq SomeTh where
+  (==) :: SomeTh -> SomeTh -> Bool
+  SomeTh n1 m1 n1m1 == SomeTh n2 m2 n2m2
+    | Just Refl <- decSNat n1 n2
+    , Just Refl <- decSNat m1 m2 =
+        n1m1 == n2m2
+    | otherwise = False
+
+deriving stock instance Show SomeTh
+
 instance NFData SomeTh where
   rnf :: SomeTh -> ()
   rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
@@ -202,12 +215,12 @@ fromBools bound = go
   go (True : bools) = dropOneSomeTh (go bools)
 {-# SPECIALIZE fromBools :: SNatRep -> [Bool] -> SomeTh #-}
 
-toSomeTh :: (Integral i, Bits bs) => i -> bs -> SomeTh
-toSomeTh nRep nmRep = toSomeThRaw (fromIntegral nRep) (copyBits nmRep)
-{-# SPECIALIZE toSomeTh :: SNatRep -> ThRep -> SomeTh #-}
+toSomeTh :: (Integral i, Bits bs) => (i, bs) -> SomeTh
+toSomeTh (nRep, nmRep) = toSomeThRaw (fromIntegral nRep, copyBits nmRep)
+{-# SPECIALIZE toSomeTh :: (SNatRep, ThRep) -> SomeTh #-}
 
-toSomeThRaw :: SNatRep -> ThRep -> SomeTh
-toSomeThRaw nRep nmRep
+toSomeThRaw :: (SNatRep, ThRep) -> SomeTh
+toSomeThRaw (nRep, nmRep)
   | SomeSNat n <- toSomeSNatRaw nRep
   , let dRep = popCount nmRep
   , SomeSNat d <- toSomeSNatRaw dRep
@@ -219,11 +232,11 @@ withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
 withSomeTh action (SomeTh n m nm) = action n m nm
 
 -- | Convert a thinning into a bit sequence.
-fromSomeTh :: (Bits bs) => SomeTh -> bs
-fromSomeTh = copyBits . fromSomeThRaw
+fromSomeTh :: (Integral i, Bits bs) => SomeTh -> (i, bs)
+fromSomeTh = bimap fromIntegral copyBits . fromSomeThRaw
 
-fromSomeThRaw :: SomeTh -> ThRep
-fromSomeThRaw = withSomeTh (\_ _ -> (.thRep))
+fromSomeThRaw :: SomeTh -> (SNatRep, ThRep)
+fromSomeThRaw = withSomeTh (\n _m nm -> (n.snatRep, nm.thRep))
 
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
 copyBits = go 0 zeroBits

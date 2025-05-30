@@ -31,15 +31,19 @@ module Data.Type.Nat.Singleton.Safe (
   -- * Linking Type-Level and Value-Level
   KnownNat (..),
   withKnownNat,
+
+  -- * Specialised target for conversion
+  SNatRep,
 ) where
 
 import Control.DeepSeq (NFData (..))
 import Data.Kind (Constraint, Type)
 import Data.Maybe (isJust)
 import Data.Proxy (Proxy (..))
-import Data.Type.Equality ((:~:) (Refl))
+import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Equality qualified as Eq
 import Data.Type.Nat (Nat (..), type (+))
+import Data.Type.Nat.Singleton.Fast (SNatRep)
 import Data.Type.Nat.Singleton.Fast qualified as Fast
 
 {- $setup
@@ -85,9 +89,9 @@ fromInductive (S n) = Fast.S (fromInductive n)
 fromSNat :: (Integral i) => SNat n -> i
 fromSNat Z = 0
 fromSNat (S n') = 1 + fromSNat n'
-{-# SPECIALIZE fromSNat :: SNat n -> Int #-}
+{-# SPECIALIZE fromSNat :: SNat n -> SNatRep #-}
 
-fromSNatRaw :: SNat n -> Int
+fromSNatRaw :: SNat n -> SNatRep
 fromSNatRaw = fromSNat
 {-# INLINE fromSNatRaw #-}
 
@@ -135,15 +139,15 @@ toSomeSNat n = iterate' n (withSomeSNat $ SomeSNat . S) (SomeSNat Z)
 
 prop> toSomeSNatRaw (fromSomeSNatRaw n) == n
 -}
-toSomeSNatRaw :: Int -> SomeSNat
+toSomeSNatRaw :: SNatRep -> SomeSNat
 toSomeSNatRaw = toSomeSNat
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped singleton.
 fromSomeSNat :: (Integral i) => SomeSNat -> i
 fromSomeSNat = withSomeSNat fromSNat
 
--- | @'fromSomeSNat' n@ returns the 'Int' representation of the wrapped singleton.
-fromSomeSNatRaw :: SomeSNat -> Int
+-- | @'fromSomeSNat' n@ returns the 'SNatRep' representation of the wrapped singleton.
+fromSomeSNatRaw :: SomeSNat -> SNatRep
 fromSomeSNatRaw = fromSomeSNat
 
 --------------------------------------------------------------------------------

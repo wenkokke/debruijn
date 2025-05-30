@@ -25,14 +25,18 @@ module Data.DeBruijn.Index.Safe (
   toSomeIxRaw,
   fromSomeIx,
   fromSomeIxRaw,
+
+  -- * Specialised target for conversion
+  IxRep,
 ) where
 
 import Control.DeepSeq (NFData (..))
+import Data.DeBruijn.Index.Fast (IxRep)
 import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.Kind (Type)
 import Data.Type.Equality ((:~:) (Refl))
 import Data.Type.Nat (type Nat (..), type Pos, type (+))
-import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), decSNat, fromSNat, fromSNatRaw, plusUnitR, toSomeSNat)
+import Data.Type.Nat.Singleton.Safe (SNat (..), SNatRep, SomeSNat (..), decSNat, fromSNat, fromSNatRaw, plusUnitR, toSomeSNat)
 import Text.Printf (printf)
 
 {- $setup
@@ -156,17 +160,17 @@ toSomeIx (bound, index)
   | bound >= 1, index == 0, SomeSNat n <- toSomeSNat (pred bound) = SomeIx (S n) FZ
   | SomeIx n i <- toSomeIx (pred bound, pred index) = SomeIx (S n) (FS i)
 
-{-| @'toSomeIxRaw' n@ constructs the index @n@ at type @'Ix' n@ from the 'Int' @n@.
+{-| @'toSomeIxRaw' n@ constructs the index @n@ at type @'Ix' n@ from the 'IxRep' @n@.
 
 prop> toSomeIxRaw (fromSomeIxRaw i) == i
 -}
-toSomeIxRaw :: (Int, Int) -> SomeIx
+toSomeIxRaw :: (SNatRep, IxRep) -> SomeIx
 toSomeIxRaw = toSomeIx
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped index.
 fromSomeIx :: (Integral i) => SomeIx -> (i, i)
 fromSomeIx = withSomeIx (\n i -> (fromSNat n, fromIx i))
 
--- | @'fromSomeSNat' n@ returns the 'Int' representation of the wrapped index.
-fromSomeIxRaw :: SomeIx -> (Int, Int)
+-- | @'fromSomeSNat' n@ returns the 'IxRep' representation of the wrapped index.
+fromSomeIxRaw :: SomeIx -> (SNatRep, IxRep)
 fromSomeIxRaw = withSomeIx (\n i -> (fromSNatRaw n, fromIxRaw i))
