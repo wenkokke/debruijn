@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE GADTs #-}
 
 module Test.Data.DeBruijn.Thinning (
@@ -15,8 +16,9 @@ import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary ()
 import Data.DeBruijn.Thinning.Safe.Arbitrary qualified as Safe
-import Data.Type.Nat.Singleton.Safe qualified as Fast.SNat (fromInductive)
-import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), plus)
+import Data.Type.Equality (type (:~:) (Refl))
+import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
+import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, plus)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Arbitrary (..), Gen, Property, counterexample, once, testProperty)
 import Text.Printf (printf)
@@ -34,6 +36,10 @@ tests =
     , testProperty "test_thinIxEq" test_thinIxEq
     , testProperty "test_thickIxEq" test_thickIxEq
     , testProperty "test_thinThEq" test_thinThEq
+    , testProperty "test_fromSomeThEq" test_fromSomeThEq
+    , testProperty "test_fromSomeThRawEq" test_fromSomeThRawEq
+    , testProperty "test_toSomeThEq" test_toSomeThEq
+    , testProperty "test_toSomeThRawEq" test_toSomeThRawEq
     , -- Test conversion to/from numbers of Fast API
       testProperty "test_Fast_fromSomeTh_eq_fromSomeThRaw" test_Fast_fromSomeTh_eq_fromSomeThRaw
     , testProperty "test_Fast_toSomeTh_eq_toSomeThRaw" test_Fast_toSomeTh_eq_toSomeThRaw
@@ -78,7 +84,7 @@ test_DropOneTh (Safe.SomeTh _n _m nm) = do
 test_dropAllEq :: Safe.SomeSNat -> Property
 test_dropAllEq (Safe.SomeSNat n) = do
   let expect = Safe.dropAll n
-  let actual = Fast.toInductive (Fast.dropAll (Fast.SNat.fromInductive n))
+  let actual = Fast.toInductive (Fast.dropAll (SNat.Fast.fromInductive n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -154,10 +160,45 @@ test_thinThEq (SomeThinThArgs nm ln) = do
 -- thinnings @n :< m@ and @l :< m@, which cannot be obtained with the current
 -- operations on type-level natural numbers.
 
--- TODO: test_fromTh
--- TODO: test_fromThRaw
--- TODO: test_toSomeTh
--- TODO: test_toSomeThRaw
+-- | Test: @fromSomeTh@.
+test_fromSomeThEq :: Safe.SomeTh -> Property
+test_fromSomeThEq (Safe.SomeTh n m nm) = do
+  let expect = Safe.fromSomeTh @Int @Integer (Safe.SomeTh n m nm)
+  let actual = Fast.fromSomeTh (Fast.SomeTh (SNat.Fast.fromInductive n) (SNat.Fast.fromInductive m) (Fast.fromInductive nm))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
+
+-- | Test: @fromSomeThRaw@.
+test_fromSomeThRawEq :: Safe.SomeTh -> Property
+test_fromSomeThRawEq (Safe.SomeTh n m nm) = do
+  let expect = Safe.fromSomeThRaw (Safe.SomeTh n m nm)
+  let actual = Fast.fromSomeThRaw (Fast.SomeTh (SNat.Fast.fromInductive n) (SNat.Fast.fromInductive m) (Fast.fromInductive nm))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
+
+-- | Test: @toSomeTh@.
+test_toSomeThEq :: SomeThRep -> Property
+test_toSomeThEq (SomeThRep nRep _mRep nmRep) = do
+  let expect = Safe.toSomeTh (nRep, nmRep)
+  let actual = Fast.toSomeTh (nRep, nmRep)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    case (expect, actual) of
+      (Safe.SomeTh n1 m1 nm1, Fast.SomeTh n2 m2 nm2) ->
+        case (n1 `Safe.decSNat` SNat.Fast.toInductive n2, m1 `Safe.decSNat` SNat.Fast.toInductive m2) of
+          (Just Refl, Just Refl) -> nm1 == Fast.toInductive nm2
+          _otherwise -> False
+
+-- | Test: @toSomeThRaw@.
+test_toSomeThRawEq :: SomeThRep -> Property
+test_toSomeThRawEq (SomeThRep nRep _mRep nmRep) = do
+  let expect = Safe.toSomeThRaw (nRep, nmRep)
+  let actual = Fast.toSomeThRaw (nRep, nmRep)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    case (expect, actual) of
+      (Safe.SomeTh n1 m1 nm1, Fast.SomeTh n2 m2 nm2) ->
+        case (n1 `Safe.decSNat` SNat.Fast.toInductive n2, m1 `Safe.decSNat` SNat.Fast.toInductive m2) of
+          (Just Refl, Just Refl) -> nm1 == Fast.toInductive nm2
+          _otherwise -> False
 
 --------------------------------------------------------------------------------
 -- Test conversion to/from numbers of Fast API
