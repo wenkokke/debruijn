@@ -126,6 +126,8 @@ library arbitrary
     Data.DeBruijn.Index.Arbitrary
     Data.DeBruijn.Index.Fast.Arbitrary
     Data.DeBruijn.Index.Safe.Arbitrary
+    Data.DeBruijn.Thinning.Arbitrary
+    Data.DeBruijn.Thinning.Fast.Arbitrary
     Data.DeBruijn.Thinning.Safe.Arbitrary
     Data.Type.Nat.Singleton.Fast.Arbitrary
     Data.Type.Nat.Singleton.Safe.Arbitrary
@@ -138,7 +140,7 @@ library arbitrary
     , data-debruijn:typenats
     , QuickCheck              >=2.9 && <3.0
 
-test-suite test-fast-is-safe
+test-suite data-debruijn-tests
   import:         language
   type:           exitcode-stdio-1.0
   main-is:        Main.hs

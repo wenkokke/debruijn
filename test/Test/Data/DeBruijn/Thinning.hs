@@ -8,7 +8,9 @@ module Test.Data.DeBruijn.Thinning (
 import Data.DeBruijn.Index.Safe qualified as Fast.Ix (fromInductive, toInductive)
 import Data.DeBruijn.Index.Safe qualified as Safe (Ix)
 import Data.DeBruijn.Index.Safe.Arbitrary qualified as Safe (arbitraryIx)
+import Data.DeBruijn.Thinning.Arbitrary (SomeThRep (..))
 import Data.DeBruijn.Thinning.Fast qualified as Fast
+import Data.DeBruijn.Thinning.Fast.Arbitrary ()
 import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive)
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary ()
@@ -23,7 +25,8 @@ tests :: TestTree
 tests =
   testGroup
     "Test.Data.DeBruijn.Thinning"
-    [ testProperty "test_KeepAllTh" test_KeepAllTh
+    [ -- Test correspondence between Fast and Safe APIs
+      testProperty "test_KeepAllTh" test_KeepAllTh
     , testProperty "test_KeepOneTh" test_KeepOneTh
     , testProperty "test_DropOneTh" test_DropOneTh
     , testProperty "test_dropAllEq" test_dropAllEq
@@ -31,13 +34,29 @@ tests =
     , testProperty "test_thinIxEq" test_thinIxEq
     , testProperty "test_thickIxEq" test_thickIxEq
     , testProperty "test_thinThEq" test_thinThEq
+    , -- Test conversion to/from numbers of Fast API
+      testProperty "test_Fast_fromSomeTh_eq_fromSomeThRaw" test_Fast_fromSomeTh_eq_fromSomeThRaw
+    , testProperty "test_Fast_toSomeTh_eq_toSomeThRaw" test_Fast_toSomeTh_eq_toSomeThRaw
+    , testProperty "test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id" test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id
+    , testProperty "test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id" test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id
+    , -- Test conversion to/from numbers of Safe API
+      testProperty "test_Safe_fromSomeTh_eq_fromSomeThRaw" test_Safe_fromSomeTh_eq_fromSomeThRaw
+    , testProperty "test_Safe_toSomeTh_eq_toSomeThRaw" test_Safe_toSomeTh_eq_toSomeThRaw
+    , testProperty "test_Safe_toSomeThRaw_o_fromSomeThRaw_eq_id" test_Safe_toSomeThRaw_o_fromSomeThRaw_eq_id
+    , testProperty "test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id" test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id
     ]
 
+--------------------------------------------------------------------------------
+-- Test correspondence between Fast and Safe APIs
+--------------------------------------------------------------------------------
+
+-- | Test: Constructor @KeepAll@.
 test_KeepAllTh :: Property
 test_KeepAllTh =
   once $
     Safe.KeepAll == Fast.toInductive Fast.KeepAll
 
+-- | Test: Constructor @KeepOne@.
 test_KeepOneTh :: Safe.SomeTh -> Property
 test_KeepOneTh (Safe.SomeTh _n _m nm) = do
   let expect = Safe.KeepOne nm
@@ -45,6 +64,7 @@ test_KeepOneTh (Safe.SomeTh _n _m nm) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
+-- | Test: Constructor @DropOne@.
 test_DropOneTh :: Safe.SomeTh -> Property
 test_DropOneTh (Safe.SomeTh _n _m nm) = do
   let expect = Safe.DropOne nm
@@ -52,6 +72,9 @@ test_DropOneTh (Safe.SomeTh _n _m nm) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
+-- TODO: Case analysis.
+
+-- | Test: @dropAll@.
 test_dropAllEq :: Safe.SomeSNat -> Property
 test_dropAllEq (Safe.SomeSNat n) = do
   let expect = Safe.dropAll n
@@ -59,6 +82,7 @@ test_dropAllEq (Safe.SomeSNat n) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
+-- | Test: @toBools@.
 test_toBoolsEq :: Safe.SomeTh -> Property
 test_toBoolsEq (Safe.SomeTh _n _m nm) = do
   let expect = Safe.toBools nm
@@ -77,6 +101,7 @@ instance Arbitrary SomeThinIxArgs where
     Safe.SomeSNat m <- arbitrary
     SomeThinIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S n)
 
+-- | Test: @thin@ from instance for indexes.
 test_thinIxEq :: SomeThinIxArgs -> Property
 test_thinIxEq (SomeThinIxArgs nm i) = do
   let expect = Safe.thin nm i
@@ -95,6 +120,7 @@ instance Arbitrary SomeThickIxArgs where
     Safe.SomeSNat m <- arbitrary
     SomeThickIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S (n `Safe.plus` m))
 
+-- | Test: @thick@ from instance for indexes.
 test_thickIxEq :: SomeThickIxArgs -> Property
 test_thickIxEq (SomeThickIxArgs nm i) = do
   let expect = Safe.thick nm i
@@ -115,6 +141,7 @@ instance Arbitrary SomeThinThArgs where
     Safe.SomeSNat dm <- arbitrary
     SomeThinThArgs <$> Safe.arbitraryTh n dm <*> Safe.arbitraryTh l dn
 
+-- | Test: @thin@ from instance for thinnings.
 test_thinThEq :: SomeThinThArgs -> Property
 test_thinThEq (SomeThinThArgs nm ln) = do
   let expect = Safe.thin nm ln
@@ -122,7 +149,7 @@ test_thinThEq (SomeThinThArgs nm ln) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
--- TODO: test_thickThEq
+-- TODO: @thick@ from instance for thinnings.
 -- This test is incredibly annoying to write, because its inputs are two
 -- thinnings @n :< m@ and @l :< m@, which cannot be obtained with the current
 -- operations on type-level natural numbers.
@@ -131,3 +158,59 @@ test_thinThEq (SomeThinThArgs nm ln) = do
 -- TODO: test_fromThRaw
 -- TODO: test_toSomeTh
 -- TODO: test_toSomeThRaw
+
+--------------------------------------------------------------------------------
+-- Test conversion to/from numbers of Fast API
+--------------------------------------------------------------------------------
+
+-- | Test: @fromSomeTh == fromSomeThRaw@.
+test_Fast_fromSomeTh_eq_fromSomeThRaw :: Fast.SomeTh -> Bool
+test_Fast_fromSomeTh_eq_fromSomeThRaw nm =
+  Fast.fromSomeTh nm == Fast.fromSomeThRaw nm
+
+-- | Test: @toSomeTh == toSomeThRaw@.
+test_Fast_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Bool
+test_Fast_toSomeTh_eq_toSomeThRaw (SomeThRep nRep _mRep nmRep) =
+  Fast.toSomeTh (nRep, nmRep) == Fast.toSomeThRaw (nRep, nmRep)
+
+-- | Test: @toSomeThRaw . fromSomeThRaw == id@.
+test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id :: Fast.SomeTh -> Bool
+test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id nm =
+  Fast.toSomeThRaw (Fast.fromSomeThRaw nm) == nm
+
+-- | Test: @fromSomeThRaw . toSomeThRaw == id@.
+test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Bool
+test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep _mRep iRep) =
+  Fast.fromSomeThRaw (Fast.toSomeThRaw (nRep, iRep)) == (nRep, iRep)
+
+-- Corollary: @toSomeTh . fromSomeTh == id@.
+
+-- Corollary: @fromSomeTh . toSomeTh == id@.
+
+--------------------------------------------------------------------------------
+-- Test conversion to/from numbers of Safe API
+--------------------------------------------------------------------------------
+
+-- | Test: @fromSomeTh == fromSomeThRaw@.
+test_Safe_fromSomeTh_eq_fromSomeThRaw :: Safe.SomeTh -> Bool
+test_Safe_fromSomeTh_eq_fromSomeThRaw nm =
+  Safe.fromSomeTh nm == Safe.fromSomeThRaw nm
+
+-- | Test: @toSomeTh == toSomeThRaw@.
+test_Safe_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Bool
+test_Safe_toSomeTh_eq_toSomeThRaw (SomeThRep nRep _mRep nmRep) =
+  Safe.toSomeTh (nRep, nmRep) == Safe.toSomeThRaw (nRep, nmRep)
+
+-- | Test: @toSomeThRaw . fromSomeThRaw == id@.
+test_Safe_toSomeThRaw_o_fromSomeThRaw_eq_id :: Safe.SomeTh -> Bool
+test_Safe_toSomeThRaw_o_fromSomeThRaw_eq_id nm =
+  Safe.toSomeThRaw (Safe.fromSomeThRaw nm) == nm
+
+-- | Test: @fromSomeThRaw . toSomeThRaw == id@.
+test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Bool
+test_Safe_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep _mRep iRep) =
+  Safe.fromSomeThRaw (Safe.toSomeThRaw (nRep, iRep)) == (nRep, iRep)
+
+-- Corollary: @toSomeTh . fromSomeTh == id@.
+
+-- Corollary: @fromSomeTh . toSomeTh == id@.

@@ -63,7 +63,7 @@ test_succIx (Safe.SomeIx _ i) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
--- | Test: Pattern matching.
+-- | Test: Case analysis.
 test_caseIx :: Safe.SomeIx -> Bool
 test_caseIx (Safe.SomeIx _ i) =
   case (i, Fast.fromInductive i) of
@@ -141,38 +141,54 @@ test_raiseEq (SNat.Safe.SomeSNat n) (Safe.SomeIx _ j) = do
 -- Test conversion to/from numbers of Fast API
 --------------------------------------------------------------------------------
 
+-- | Test: @fromSomeIx == fromSomeIxRaw@.
 test_Fast_fromSomeIx_eq_fromSomeIxRaw :: Fast.SomeIx -> Bool
 test_Fast_fromSomeIx_eq_fromSomeIxRaw n =
   Fast.fromSomeIx n == Fast.fromSomeIxRaw n
 
+-- | Test: @toSomeIx == toSomeIxRaw@.
 test_Fast_toSomeIx_eq_toSomeIxRaw :: SomeIxRep -> Bool
 test_Fast_toSomeIx_eq_toSomeIxRaw (SomeIxRep nRep iRep) =
   Fast.toSomeIx (nRep, iRep) == Fast.toSomeIxRaw (nRep, iRep)
 
+-- | Test: @toSomeIxRaw . fromSomeIxRaw == id@.
 test_Fast_toSomeIxRaw_o_fromSomeIxRaw_eq_id :: Fast.SomeIx -> Bool
 test_Fast_toSomeIxRaw_o_fromSomeIxRaw_eq_id n =
   Fast.toSomeIxRaw (Fast.fromSomeIxRaw n) == n
 
+-- | Test: @fromSomeIxRaw . toSomeIxRaw == id@.
 test_Fast_fromSomeIxRaw_o_toSomeIxRaw_eq_id :: SomeIxRep -> Bool
 test_Fast_fromSomeIxRaw_o_toSomeIxRaw_eq_id (SomeIxRep nRep iRep) =
   Fast.fromSomeIxRaw (Fast.toSomeIxRaw (nRep, iRep)) == (nRep, iRep)
+
+-- Corollary: @toSomeIx . fromSomeIx == id@.
+
+-- Corollary: @fromSomeIx . toSomeIx == id@.
 
 --------------------------------------------------------------------------------
 -- Test conversion to/from numbers of Safe API
 --------------------------------------------------------------------------------
 
+-- | Test: @fromSomeIx == fromSomeIxRaw@.
 test_Safe_fromSomeIx_eq_fromSomeIxRaw :: Safe.SomeIx -> Bool
 test_Safe_fromSomeIx_eq_fromSomeIxRaw n =
   Safe.fromSomeIx n == Safe.fromSomeIxRaw n
 
+-- | Test: @toSomeIx == toSomeIxRaw@.
 test_Safe_toSomeIx_eq_toSomeIxRaw :: SomeIxRep -> Bool
 test_Safe_toSomeIx_eq_toSomeIxRaw (SomeIxRep nRep iRep) =
   Safe.toSomeIx (nRep, iRep) == Safe.toSomeIxRaw (nRep, iRep)
 
+-- | Test: @toSomeIxRaw . fromSomeIxRaw == id@.
 test_Safe_toSomeIxRaw_o_fromSomeIxRaw_eq_id :: Safe.SomeIx -> Bool
 test_Safe_toSomeIxRaw_o_fromSomeIxRaw_eq_id n =
   Safe.toSomeIxRaw (Safe.fromSomeIxRaw n) == n
 
+-- | Test: @fromSomeIxRaw . toSomeIxRaw == id@.
 test_Safe_fromSomeIxRaw_o_toSomeIxRaw_eq_id :: SomeIxRep -> Bool
 test_Safe_fromSomeIxRaw_o_toSomeIxRaw_eq_id (SomeIxRep nRep iRep) =
   Safe.fromSomeIxRaw (Safe.toSomeIxRaw (nRep, iRep)) == (nRep, iRep)
+
+-- Corollary: @toSomeIx . fromSomeIx == id@.
+
+-- Corollary: @fromSomeIx . toSomeIx == id@.
