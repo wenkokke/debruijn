@@ -18,7 +18,12 @@ flag safe
   manual:      True
   default:     False
 
-flag skew-list
+flag thinning-as-word
+  description: Use a Word represent thinnings.
+  manual:      True
+  default:     False
+
+flag env-as-skew-list
   description: Use the skew-list package to represent environments.
   manual:      True
   default:     False
@@ -95,9 +100,12 @@ library fast
     , data-debruijn:typenats
     , deepseq                 ^>=1.5
 
-  if flag(skew-list)
+  if flag(thinning-as-word)
+    cpp-options: -DTHINNING_AS_WORD
+
+  if flag(env-as-skew-list)
     build-depends: skew-list ^>=0.1
-    cpp-options:   -DSKEW_LIST
+    cpp-options:   -DENV_AS_SKEW_LIST
 
   else
     build-depends: containers >=0.6.8 && <0.9

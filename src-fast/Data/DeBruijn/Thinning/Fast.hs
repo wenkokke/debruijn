@@ -48,22 +48,30 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
+#ifdef THINNING_AS_WORD
+type ThRep = Word
+#else
 type ThRep = Integer
+#endif
 
 mkKeepAllRep :: ThRep
 mkKeepAllRep = zeroBits
+{-# INLINE mkKeepAllRep #-}
 
 mkKeepOneRep :: ThRep -> ThRep
 mkKeepOneRep = (`shift` 1)
+{-# INLINE mkKeepOneRep #-}
 
 mkDropOneRep :: ThRep -> ThRep
 mkDropOneRep = (`setBit` 0) . (`shift` 1)
+{-# INLINE mkDropOneRep #-}
 
 elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
 elThRep ifKeepAll ifKeepOne ifDropOne th
   | th == zeroBits = ifKeepAll
   | testBit th 0 = ifDropOne (shift th (-1))
   | otherwise = ifKeepOne (shift th (-1))
+{-# INLINE elThRep #-}
 
 --------------------------------------------------------------------------------
 -- Thinnings
@@ -156,6 +164,7 @@ fromTh = \case
 
 fromThRaw :: n :<= m -> ThRep
 fromThRaw = (.thRep)
+{-# INLINE fromThRaw #-}
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -190,6 +199,7 @@ keepAllSomeTh (SomeSNat bound) =
     , upper = bound
     , value = KeepAll
     }
+{-# INLINE keepAllSomeTh #-}
 
 keepOneSomeTh :: SomeTh -> SomeTh
 keepOneSomeTh SomeTh{..} =
@@ -198,6 +208,7 @@ keepOneSomeTh SomeTh{..} =
     , upper = S upper
     , value = KeepOne value
     }
+{-# INLINE keepOneSomeTh #-}
 
 dropOneSomeTh :: SomeTh -> SomeTh
 dropOneSomeTh SomeTh{..} =
@@ -206,6 +217,7 @@ dropOneSomeTh SomeTh{..} =
     , upper = S upper
     , value = DropOne value
     }
+{-# INLINE dropOneSomeTh #-}
 
 fromBools :: (Integral i) => i -> [Bool] -> SomeTh
 fromBools bound = go
@@ -227,16 +239,20 @@ toSomeThRaw (nRep, nmRep)
   , let m = n `plus` d
   , let nm = UnsafeTh nmRep =
       SomeTh n m nm
+{-# INLINE toSomeThRaw #-}
 
 withSomeTh :: (forall n m. SNat n -> SNat m -> n :<= m -> r) -> SomeTh -> r
 withSomeTh action (SomeTh n m nm) = action n m nm
+{-# INLINE withSomeTh #-}
 
 -- | Convert a thinning into a bit sequence.
 fromSomeTh :: (Integral i, Bits bs) => SomeTh -> (i, bs)
 fromSomeTh = bimap fromIntegral copyBits . fromSomeThRaw
+{-# INLINE fromSomeTh #-}
 
 fromSomeThRaw :: SomeTh -> (SNatRep, ThRep)
 fromSomeThRaw = withSomeTh (\n _m nm -> (n.snatRep, nm.thRep))
+{-# INLINE fromSomeThRaw #-}
 
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
 copyBits = go 0 zeroBits

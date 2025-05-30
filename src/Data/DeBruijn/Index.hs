@@ -19,6 +19,9 @@ module Data.DeBruijn.Index (
   toSomeIxRaw,
   fromSomeIx,
   fromSomeIxRaw,
+
+  -- * Specialised target for conversion
+  IxRep,
 ) where
 
 #ifdef EXPORT_SAFE_API
@@ -38,6 +41,7 @@ import Data.DeBruijn.Index.Safe (
   toSomeIx,
   toSomeIxRaw,
   withSomeIx,
+  IxRep,
  )
 #else
 import Data.DeBruijn.Index.Fast (
@@ -56,5 +60,6 @@ import Data.DeBruijn.Index.Fast (
   toSomeIx,
   toSomeIxRaw,
   withSomeIx,
+  IxRep,
  )
 #endif

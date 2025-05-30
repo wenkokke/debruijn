@@ -7,9 +7,9 @@ module Bench.Time.Data.DeBruijn.Thinning where
 import Bench.Time.Data.DeBruijn.Thinning.Samples (samples1)
 import Control.DeepSeq (force)
 import Criterion.Main (Benchmark, bench, bgroup, nf)
-import Data.DeBruijn.Thinning (SomeTh (..), Thin (..), toSomeThRaw, (:<=))
+import Data.DeBruijn.Thinning (SomeTh (..), ThRep, Thin (..), toSomeThRaw, (:<=))
 import Data.Type.Equality (type (:~:) (Refl))
-import Data.Type.Nat.Singleton (decSNat, fromSNatRaw)
+import Data.Type.Nat.Singleton (SNatRep, decSNat, fromSNatRaw)
 import Text.Printf (printf)
 
 benchmarks :: Benchmark
@@ -30,7 +30,7 @@ data SomeThinThArgs = forall l n m. SomeThinThArgs (n :<= m) (l :<= n)
 
 deriving stock instance Show SomeThinThArgs
 
-bench_thinWith :: (Int, Integer, Int, Integer, Int) -> Benchmark
+bench_thinWith :: (SNatRep, ThRep, SNatRep, ThRep, SNatRep) -> Benchmark
 bench_thinWith (lRep, lnRep, nRep, nmRep, mRep)
   | let !benchLabel = "[" <> show lRep <> "," <> showThRep nRep lnRep <> "," <> show nRep <> "," <> showThRep mRep nmRep <> "," <> show mRep <> "]" :: String
   , SomeTh n _m nm <- force (toSomeThRaw (nRep, nmRep))
