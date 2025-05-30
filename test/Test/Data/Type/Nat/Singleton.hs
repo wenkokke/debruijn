@@ -17,15 +17,15 @@ tests =
     , testProperty "test_fromSNatEq" test_fromSNatEq
     , testProperty "test_decSNatEq" test_decSNatEq
     , -- Test conversion to/from numbers of Fast API
-      testProperty "test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw" test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw
-    , testProperty "test_Unsafe_toSomeSNat_eq_toSomeSNatRaw" test_Unsafe_toSomeSNat_eq_toSomeSNatRaw
-    , testProperty "test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
-    , testProperty "test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
+      testProperty "test_Fast_fromSomeSNat_eq_fromSomeSNatRaw" test_Fast_fromSomeSNat_eq_fromSomeSNatRaw
+    , testProperty "test_Fast_toSomeSNat_eq_toSomeSNatRaw" test_Fast_toSomeSNat_eq_toSomeSNatRaw
+    , testProperty "test_Fast_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Fast_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
+    , testProperty "test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
     , -- Test conversion to/from numbers of Safe API
-      testProperty "test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw" test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw
-    , testProperty "test_Inductive_toSomeSNat_eq_toSomeSNatRaw" test_Inductive_toSomeSNat_eq_toSomeSNatRaw
-    , testProperty "test_Inductive_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Inductive_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
-    , testProperty "test_Inductive_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Inductive_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
+      testProperty "test_Safe_fromSomeSNat_eq_fromSomeSNatRaw" test_Safe_fromSomeSNat_eq_fromSomeSNatRaw
+    , testProperty "test_Safe_toSomeSNat_eq_toSomeSNatRaw" test_Safe_toSomeSNat_eq_toSomeSNatRaw
+    , testProperty "test_Safe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id" test_Safe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id
+    , testProperty "test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id" test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id
     ]
 
 --------------------------------------------------------------------------------
@@ -48,38 +48,38 @@ test_decSNatEq (Safe.SomeSNat m) (Safe.SomeSNat n) =
 -- Test conversion to/from numbers of Fast API
 --------------------------------------------------------------------------------
 
-test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw :: Fast.SomeSNat -> Bool
-test_Unsafe_fromSomeSNat_eq_fromSomeSNatRaw n =
+test_Fast_fromSomeSNat_eq_fromSomeSNatRaw :: Fast.SomeSNat -> Bool
+test_Fast_fromSomeSNat_eq_fromSomeSNatRaw n =
   Fast.fromSomeSNat n == Fast.fromSomeSNatRaw n
 
-test_Unsafe_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
-test_Unsafe_toSomeSNat_eq_toSomeSNatRaw (NonNegative u) =
+test_Fast_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
+test_Fast_toSomeSNat_eq_toSomeSNatRaw (NonNegative u) =
   Fast.toSomeSNat u == Fast.toSomeSNatRaw u
 
-test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Fast.SomeSNat -> Bool
-test_Unsafe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
+test_Fast_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Fast.SomeSNat -> Bool
+test_Fast_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
   Fast.toSomeSNatRaw (Fast.fromSomeSNatRaw n) == n
 
-test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
-test_Unsafe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative u) =
+test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
+test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative u) =
   Fast.fromSomeSNatRaw (Fast.toSomeSNatRaw u) == u
 
 --------------------------------------------------------------------------------
 -- Test conversion to/from numbers of Safe API
 --------------------------------------------------------------------------------
 
-test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw :: Safe.SomeSNat -> Bool
-test_Inductive_fromSomeSNat_eq_fromSomeSNatRaw n =
+test_Safe_fromSomeSNat_eq_fromSomeSNatRaw :: Safe.SomeSNat -> Bool
+test_Safe_fromSomeSNat_eq_fromSomeSNatRaw n =
   Safe.fromSomeSNat n == Safe.fromSomeSNatRaw n
 
-test_Inductive_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
-test_Inductive_toSomeSNat_eq_toSomeSNatRaw (NonNegative u) =
-  Safe.toSomeSNat u == Safe.toSomeSNatRaw u
+test_Safe_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Bool
+test_Safe_toSomeSNat_eq_toSomeSNatRaw (NonNegative nRep) =
+  Safe.toSomeSNat nRep == Safe.toSomeSNatRaw nRep
 
-test_Inductive_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Safe.SomeSNat -> Bool
-test_Inductive_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
+test_Safe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id :: Safe.SomeSNat -> Bool
+test_Safe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n =
   Safe.toSomeSNatRaw (Safe.fromSomeSNatRaw n) == n
 
-test_Inductive_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
-test_Inductive_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative u) =
-  Safe.fromSomeSNatRaw (Safe.toSomeSNatRaw u) == u
+test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Bool
+test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative nRep) =
+  Safe.fromSomeSNatRaw (Safe.toSomeSNatRaw nRep) == nRep
