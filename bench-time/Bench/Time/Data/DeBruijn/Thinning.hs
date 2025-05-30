@@ -33,8 +33,8 @@ deriving stock instance Show SomeThinThArgs
 bench_thinWith :: (Int, Integer, Int, Integer, Int) -> Benchmark
 bench_thinWith (lRep, lnRep, nRep, nmRep, mRep)
   | let !benchLabel = "[" <> show lRep <> "," <> showThRep nRep lnRep <> "," <> show nRep <> "," <> showThRep mRep nmRep <> "," <> show mRep <> "]" :: String
-  , SomeTh n _m nm <- force (toSomeThRaw nRep nmRep)
-  , SomeTh _l n' ln <- force (toSomeThRaw lRep lnRep) =
+  , SomeTh n _m nm <- force (toSomeThRaw (nRep, nmRep))
+  , SomeTh _l n' ln <- force (toSomeThRaw (lRep, lnRep)) =
       case decSNat n n' of
         Just Refl -> bench benchLabel $ nf (thin nm) ln
         Nothing -> error (printf msgFormat lRep lnRep nRep nmRep mRep (fromSNatRaw n) (fromSNatRaw n'))
