@@ -4,7 +4,7 @@
 
 module Bench.Time.Data.DeBruijn.Thinning where
 
-import Bench.Time.Data.DeBruijn.Thinning.Samples (samples1)
+import Bench.Time.Data.DeBruijn.Thinning.Samples (samples1, samples2)
 import Control.DeepSeq (force)
 import Criterion.Main (Benchmark, bench, bgroup, nf)
 import Data.DeBruijn.Thinning (SomeTh (..), ThRep, Thin (..), toSomeThRaw, (:<=))
@@ -24,7 +24,13 @@ benchmarks =
 --------------------------------------------------------------------------------
 
 bench_thin :: Benchmark
-bench_thin = bgroup "thin" (bench_thinWith <$> samples1)
+bench_thin =
+  bgroup
+    "thin"
+    [ bgroup "samples1" (bench_thinWith <$> samples1)
+    , bgroup "samples2" (bench_thinWith <$> samples2)
+    , bgroup "samples3" (bench_thinWith <$> samples3)
+    ]
 
 data SomeThinThArgs = forall l n m. SomeThinThArgs (n :<= m) (l :<= n)
 
