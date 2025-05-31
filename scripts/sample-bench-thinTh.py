@@ -8,13 +8,13 @@ from warnings import warn
 def sample_bench_thinTh(ln_count: int, nm_count: int, m: int, verbose: bool = False) -> Iterator[str]:
   nm_pop = 2**m-1
   if verbose and nm_pop < nm_count:
-    warn(f"sample_bench_thinTh: population {nm_pop} is smaller than sample size {i}")
+    warn(f"sample_bench_thinTh: population {nm_pop} is smaller than sample size {nm_count}")
   for nm in sample(range(1,nm_pop), k=min(nm_pop, nm_count)):
     nm_str = f"0b{{0:>0{m}b}}".format(nm)
     n = m - nm.bit_count()
     ln_pop = 2**n-1
     if verbose and ln_pop < ln_count:
-      warn(f"sample_bench_thinTh: population {ln_pop} is smaller than sample size {j}")
+      warn(f"sample_bench_thinTh: population {ln_pop} is smaller than sample size {ln_count}")
     for ln in sample(range(ln_pop), k=min(ln_pop,ln_count)):
       l = n - ln.bit_count()  # noqa: E741
       ln_str = f"0b{{0:>0{n}b}}".format(ln)
