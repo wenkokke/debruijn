@@ -33,6 +33,11 @@ flag th-as-word64
   manual:      True
   default:     False
 
+flag th-as-bitvec
+  description: Use a Bit Vector to represent thinnings.
+  manual:      True
+  default:     False
+
 flag env-as-skew-list
   description: Use the skew-list package to represent environments.
   manual:      True
@@ -115,6 +120,13 @@ library fast
 
   if flag(ix-as-word8)
     cpp-options: -DIX_AS_WORD8
+
+  if flag(th-as-bitvec)
+    build-depends:
+      , bitvec  ^>=1.1
+      , vector  ^>=0.13
+
+    cpp-options:   -DTH_AS_BITVEC
 
   if flag(th-as-word64)
     cpp-options: -DTH_AS_WORD64

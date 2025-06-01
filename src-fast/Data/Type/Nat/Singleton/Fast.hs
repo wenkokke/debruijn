@@ -40,6 +40,8 @@ module Data.Type.Nat.Singleton.Fast (
 
   -- * Fast
   SNatRep,
+  intToSNatRep,
+  snatRepToInt,
   SNat (UnsafeSNat, snatRep),
 ) where
 
@@ -55,6 +57,7 @@ import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
 #ifdef SNAT_AS_WORD8
+import Control.Exception (throw, ArithException (Overflow, Underflow))
 import Data.Word (Word8)
 #endif
 
@@ -169,6 +172,30 @@ decSNat n m =
   if n.snatRep == m.snatRep
     then Just (unsafeCoerce Refl)
     else Nothing
+
+-- | Convert an 'Int' to an 'SNatRep'.
+intToSNatRep :: Int -> SNatRep
+#ifdef SNAT_AS_WORD8
+-- TODO: Make this safe.
+intToSNatRep int
+  | int < 0 = throw Underflow
+  | int > fromIntegral (maxBound @Word8) = throw Overflow
+  | otherwise = fromIntegral @Int @Word8 int
+{-# INLINE intToSNatRep #-}
+#else
+intToSNatRep = id
+{-# INLINE intToSNatRep #-}
+#endif
+
+-- | Convert an 'SNatRep' to an 'Int'.
+snatRepToInt :: SNatRep -> Int
+#ifdef SNAT_AS_WORD8
+snatRepToInt = fromIntegral @Word8 @Int
+{-# INLINE snatRepToInt #-}
+#else
+snatRepToInt = id
+{-# INLINE snatRepToInt #-}
+#endif
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper

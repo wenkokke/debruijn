@@ -31,8 +31,9 @@ module Data.DeBruijn.Index.Fast (
 
   -- * Fast
   IxRep,
-  snatRepToIxRep,
+  intToIxRep,
   ixRepToInt,
+  snatRepToIxRep,
   Ix (UnsafeIx, ixRep),
 ) where
 
@@ -45,11 +46,9 @@ import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, decSNat)
 import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
-#ifdef IX_AS_WORD8
-import Data.Word (Word8)
-#ifndef SNAT_AS_WORD8
+#if defined(IX_AS_WORD8) || defined(SNAT_AS_WORD8)
 import Control.Exception (ArithException (Overflow, Underflow), throw)
-#endif
+import Data.Word (Word8)
 #endif
 
 {- $setup
@@ -194,6 +193,30 @@ inject i _m = UnsafeIx i.ixRep
 raise :: SNat n -> Ix m -> Ix (n + m)
 raise n j = UnsafeIx (snatRepToIxRep n.snatRep + j.ixRep)
 
+-- | Convert an 'IxRep' to an 'Int'.
+intToIxRep :: Int -> IxRep
+#ifdef IX_AS_WORD8
+-- TODO: Make this safe.
+intToIxRep int
+  | int < 0 = throw Underflow
+  | int > fromIntegral (maxBound @Word8) = throw Overflow
+  | otherwise = fromIntegral @Int @Word8 int
+{-# INLINE intToIxRep #-}
+#else
+intToIxRep = id @Int
+{-# INLINE intToIxRep #-}
+#endif
+
+-- | Convert an 'IxRep' to an 'Int'.
+ixRepToInt :: IxRep -> Int
+#ifdef IX_AS_WORD8
+ixRepToInt = fromIntegral @Word8 @Int
+{-# INLINE ixRepToInt #-}
+#else
+ixRepToInt = id @Int
+{-# INLINE ixRepToInt #-}
+#endif
+
 -- | Convert an 'SNatRep' to an 'IxRep'.
 snatRepToIxRep :: SNatRep -> IxRep
 #ifdef SNAT_AS_WORD8
@@ -215,16 +238,6 @@ snatRepToIxRep snatRep
 snatRepToIxRep = id @Int
 {-# INLINE snatRepToIxRep #-}
 #endif
-#endif
-
--- | Convert an 'IxRep' to an 'Int'.
-ixRepToInt :: IxRep -> Int
-#ifdef IX_AS_WORD8
-ixRepToInt = fromIntegral @Word8 @Int
-{-# INLINE ixRepToInt #-}
-#else
-ixRepToInt = id @Int
-{-# INLINE ixRepToInt #-}
 #endif
 
 --------------------------------------------------------------------------------
@@ -271,7 +284,7 @@ toSomeIxRaw (n, i)
   | otherwise = SomeIx (UnsafeSNat n) (UnsafeIx i)
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped index.
-fromSomeIx :: (Integral i) => SomeIx -> (i, i)
+fromSomeIx :: (Integral n, Integral i) => SomeIx -> (n, i)
 fromSomeIx = bimap fromIntegral fromIntegral . fromSomeIxRaw
 
 -- | @'fromSomeSNat' n@ returns the 'Int' representation of the wrapped index.
