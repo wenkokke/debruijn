@@ -37,8 +37,8 @@ data/bench-time-safe.csv: $(SOURCE_FILES)
 ################################################################################
 # Benchmark: Indexes -- Cyberglot
 
-.PHONY: bench
-bench: \
+.PHONY: bench-cyberglot
+bench-cyberglot: \
 	data/bench-space-fast-int-cyberglot.csv \
 	data/bench-space-fast-word8-cyberglot.csv \
 	data/bench-space-safe-cyberglot.csv \
