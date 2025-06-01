@@ -8,10 +8,10 @@ module Bench.Time.Data.DeBruijn.Index (
 
 import Control.DeepSeq (force)
 import Criterion.Main (Benchmark, bench, bgroup, nf)
-import Data.DeBruijn.Index (SomeIx (..), thick, thin, toSomeIxRaw)
+import Data.DeBruijn.Index (IxRep, SomeIx (..), thick, thin, toSomeIxRaw)
 import Data.List (nub)
 import Data.Type.Equality (type (:~:) (Refl))
-import Data.Type.Nat.Singleton (SNat (..), decSNat)
+import Data.Type.Nat.Singleton (SNat (..), SNatRep, decSNat)
 import Text.Printf (printf)
 
 benchmarks :: Benchmark
@@ -29,7 +29,7 @@ benchmarks =
 bench_thin :: Benchmark
 bench_thin = bgroup "thin" (bench_thinWith <$> bench_thinArgs)
 
-bench_thinWith :: (Int, Int, Int) -> Benchmark
+bench_thinWith :: (SNatRep, IxRep, IxRep) -> Benchmark
 bench_thinWith (nRaw, iRaw, jRaw)
   | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
   , SomeIx sn i <- force (toSomeIxRaw (nRaw + 1, iRaw))
@@ -38,7 +38,7 @@ bench_thinWith (nRaw, iRaw, jRaw)
       bench benchLabel $ nf (thin i) j
   | otherwise = error (printf "bench_thinWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
-bench_thinArgs :: [(Int, Int, Int)]
+bench_thinArgs :: [(SNatRep, IxRep, IxRep)]
 bench_thinArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
   evenSpreadBy5 =
@@ -58,7 +58,7 @@ bench_thinArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
 bench_thick :: Benchmark
 bench_thick = bgroup "thick" (bench_thickWith <$> bench_thickArgs)
 
-bench_thickWith :: (Int, Int, Int) -> Benchmark
+bench_thickWith :: (SNatRep, IxRep, IxRep) -> Benchmark
 bench_thickWith (nRaw, iRaw, jRaw)
   | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
   , SomeIx (S n) i <- force (toSomeIxRaw (nRaw, iRaw))
@@ -67,7 +67,7 @@ bench_thickWith (nRaw, iRaw, jRaw)
       bench benchLabel $ nf (thick i) j
   | otherwise = error (printf "bench_thickWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
-bench_thickArgs :: [(Int, Int, Int)]
+bench_thickArgs :: [(SNatRep, IxRep, IxRep)]
 bench_thickArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
   evenSpreadBy5 =

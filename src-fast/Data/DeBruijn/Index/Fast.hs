@@ -31,6 +31,8 @@ module Data.DeBruijn.Index.Fast (
 
   -- * Fast
   IxRep,
+  snatRepToIxRep,
+  ixRepToInt,
   Ix (UnsafeIx, ixRep),
 ) where
 
@@ -43,6 +45,13 @@ import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, decSNat)
 import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
+#ifdef IX_AS_WORD8
+import Data.Word (Word8)
+#ifndef SNAT_AS_WORD8
+import Control.Exception (ArithException (Overflow, Underflow), throw)
+#endif
+#endif
+
 {- $setup
 >>> import Data.DeBruijn.Index.Fast.Arbitrary
 -}
@@ -51,7 +60,11 @@ import Unsafe.Coerce (unsafeCoerce)
 -- DeBruijn Index Representation
 --------------------------------------------------------------------------------
 
+#ifdef IX_AS_WORD8
+type IxRep = Word8
+#else
 type IxRep = Int
+#endif
 
 mkFZRep :: IxRep
 mkFZRep = 0
@@ -179,7 +192,40 @@ inject i _m = UnsafeIx i.ixRep
 
 -- | Raise.
 raise :: SNat n -> Ix m -> Ix (n + m)
-raise n j = UnsafeIx (n.snatRep + j.ixRep)
+raise n j = UnsafeIx (snatRepToIxRep n.snatRep + j.ixRep)
+
+-- | Convert an 'SNatRep' to an 'IxRep'.
+snatRepToIxRep :: SNatRep -> IxRep
+#ifdef SNAT_AS_WORD8
+#ifdef IX_AS_WORD8
+snatRepToIxRep = id @Word8
+{-# INLINE snatRepToIxRep #-}
+#else
+snatRepToIxRep = fromIntegral @Word8 @Int
+{-# INLINE snatRepToIxRep #-}
+#endif
+#else
+#ifdef IX_AS_WORD8
+-- Int -> Word8
+snatRepToIxRep snatRep
+  | snatRep < 0 = throw Underflow
+  | snatRep > fromIntegral (maxBound @Word8) = throw Overflow
+  | otherwise = fromIntegral snatRep
+#else
+snatRepToIxRep = id @Int
+{-# INLINE snatRepToIxRep #-}
+#endif
+#endif
+
+-- | Convert an 'IxRep' to an 'Int'.
+ixRepToInt :: IxRep -> Int
+#ifdef IX_AS_WORD8
+ixRepToInt = fromIntegral @Word8 @Int
+{-# INLINE ixRepToInt #-}
+#else
+ixRepToInt = id @Int
+{-# INLINE ixRepToInt #-}
+#endif
 
 --------------------------------------------------------------------------------
 -- Existential Wrapper
@@ -221,7 +267,7 @@ prop> toSomeIxRaw (fromSomeIxRaw i) == i
 toSomeIxRaw :: (SNatRep, IxRep) -> SomeIx
 toSomeIxRaw (n, i)
   | i < 0 = error $ printf "index cannot contain negative value, found index %d" i
-  | n <= i = error $ printf "bound must be larger than index, found bound %d and index %d" n i
+  | snatRepToIxRep n <= i = error $ printf "bound must be larger than index, found bound %d and index %d" n i
   | otherwise = SomeIx (UnsafeSNat n) (UnsafeIx i)
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped index.

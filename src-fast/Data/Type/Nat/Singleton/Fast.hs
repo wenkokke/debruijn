@@ -54,6 +54,10 @@ import GHC.TypeLits qualified as GHC
 import Text.Printf (printf)
 import Unsafe.Coerce (unsafeCoerce)
 
+#ifdef SNAT_AS_WORD8
+import Data.Word (Word8)
+#endif
+
 {- $setup
 >>> import Data.Type.Nat.Singleton.Fast.Arbitrary
 -}
@@ -62,7 +66,11 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Natural Number Singleton Representation
 --------------------------------------------------------------------------------
 
+#ifdef SNAT_AS_WORD8
+type SNatRep = Word8
+#else
 type SNatRep = Int
+#endif
 
 isValidSNatRep :: SNatRep -> Bool
 isValidSNatRep = (>= 0)
