@@ -34,6 +34,7 @@ module Data.DeBruijn.Index.Fast (
   intToIxRep,
   ixRepToInt,
   snatRepToIxRep,
+  ixRepToSNatRep,
   Ix (UnsafeIx, ixRep),
 ) where
 
@@ -237,6 +238,28 @@ snatRepToIxRep snatRep
 #else
 snatRepToIxRep = id @Int
 {-# INLINE snatRepToIxRep #-}
+#endif
+#endif
+
+-- | Convert an 'IxRep' to an 'SNatRep'.
+ixRepToSNatRep :: IxRep -> SNatRep
+#ifdef SNAT_AS_WORD8
+#ifdef IX_AS_WORD8
+ixRepToSNatRep = id @Word8
+{-# INLINE ixRepToSNatRep #-}
+#else
+ixRepToSNatRep ixRep
+  | ixRep < 0 = throw Underflow
+  | ixRep > fromIntegral (maxBound @Word8) = throw Overflow
+  | otherwise = fromIntegral ixRep
+{-# INLINE ixRepToSNatRep #-}
+#endif
+#else
+#ifdef IX_AS_WORD8
+ixRepToSNatRep = fromIntegral @Int @Word8
+#else
+ixRepToSNatRep = id @Int
+{-# INLINE ixRepToSNatRep #-}
 #endif
 #endif
 

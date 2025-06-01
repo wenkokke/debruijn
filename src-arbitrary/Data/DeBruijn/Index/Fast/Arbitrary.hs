@@ -6,7 +6,7 @@ module Data.DeBruijn.Index.Fast.Arbitrary (
   arbitraryIx,
 ) where
 
-import Data.DeBruijn.Index.Fast (Ix (..), SomeIx (..), toSomeIxRaw)
+import Data.DeBruijn.Index.Fast (Ix (..), SomeIx (..), ixRepToSNatRep, toSomeIxRaw)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton.Fast (SNat (..))
 import Data.Type.Nat.Singleton.Fast.Arbitrary ()
@@ -19,7 +19,7 @@ instance Arbitrary SomeIx where
   arbitrary = do
     Positive boundOverIndex <- arbitrary
     NonNegative index <- arbitrary
-    pure $ toSomeIxRaw (fromIntegral index + boundOverIndex, index)
+    pure $ toSomeIxRaw (ixRepToSNatRep index + boundOverIndex, index)
 
 instance Arbitrary (Ix (S Z)) where
   arbitrary :: Gen (Ix (S Z))
