@@ -6,11 +6,12 @@ module Test.Data.DeBruijn.Index (tests) where
 import Data.DeBruijn.Index.Arbitrary (SomeIxRep (..))
 import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.DeBruijn.Index.Fast.Arbitrary ()
+import Data.DeBruijn.Index.Safe (IxRep)
 import Data.DeBruijn.Index.Safe qualified as Fast (fromInductive, toInductive)
 import Data.DeBruijn.Index.Safe qualified as Safe
 import Data.DeBruijn.Index.Safe.Arbitrary ()
 import Data.Type.Equality (type (:~:) (Refl))
-import Data.Type.Nat.Singleton.Safe (SNat (..))
+import Data.Type.Nat.Singleton.Safe (SNat (..), SNatRep)
 import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
 import Data.Type.Nat.Singleton.Safe qualified as Safe (SomeSNat (..), decSNat)
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
@@ -100,9 +101,9 @@ test_fromIxRawEq (Safe.SomeIx _ i) = do
     expect == actual
 
 -- | Test: @thin@.
-test_thinEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
+test_thinEq :: (Positive SNatRep, NonNegative IxRep, NonNegative IxRep) -> Property
 test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
-  | let nRaw = dRaw + (iRaw `max` jRaw)
+  | let nRaw = dRaw + fromIntegral (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw + 1, iRaw)
   , Safe.SomeIx n' j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do
@@ -113,9 +114,9 @@ test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   | otherwise = error "test_thinEq: could not construct test"
 
 -- | Test: @thick@.
-test_thickEq :: (Positive Int, NonNegative Int, NonNegative Int) -> Property
+test_thickEq :: (Positive SNatRep, NonNegative IxRep, NonNegative IxRep) -> Property
 test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
-  | let nRaw = dRaw + (iRaw `max` jRaw)
+  | let nRaw = dRaw + fromIntegral (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw, iRaw)
   , Safe.SomeIx (S n') j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do
@@ -144,7 +145,7 @@ test_raiseEq (Safe.SomeSNat n) (Safe.SomeIx _ j) = do
 -- | Test: @fromSomeIx@.
 test_fromSomeIxEq :: Safe.SomeIx -> Property
 test_fromSomeIxEq (Safe.SomeIx n i) = do
-  let expect = Safe.fromSomeIx @Int (Safe.SomeIx n i)
+  let expect = Safe.fromSomeIx @SNatRep @IxRep (Safe.SomeIx n i)
   let actual = Fast.fromSomeIx (Fast.SomeIx (SNat.Fast.fromInductive n) (Fast.fromInductive i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual

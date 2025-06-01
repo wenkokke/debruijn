@@ -19,7 +19,7 @@ instance Arbitrary SomeIx where
   arbitrary = do
     Positive boundOverIndex <- arbitrary
     NonNegative index <- arbitrary
-    pure $ toSomeIxRaw (index + boundOverIndex, index)
+    pure $ toSomeIxRaw (fromIntegral index + boundOverIndex, index)
 
 instance Arbitrary (Ix (S Z)) where
   arbitrary :: Gen (Ix (S Z))

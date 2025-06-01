@@ -31,6 +31,8 @@ module Data.DeBruijn.Thinning.Fast (
 
   -- * Fast
   ThRep,
+  bitsToThRep,
+  thRepToBits,
   (:<=) (UnsafeTh, thRep),
 ) where
 
@@ -44,15 +46,21 @@ import Data.Type.Nat (Nat (..), Pos, Pred)
 import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
-#ifdef TH_AS_WORD64
+#ifdef TH_AS_BITVEC
+import Data.Bit (Bit)
+import Data.Vector.Unboxed (Vector)
+#elif TH_AS_WORD64
 import Data.Word (Word64)
+#else
 #endif
 
 --------------------------------------------------------------------------------
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-#ifdef TH_AS_WORD64
+#ifdef TH_AS_BITVEC
+type ThRep = Vector Bit
+#elif TH_AS_WORD64
 type ThRep = Word64
 #else
 type ThRep = Integer
@@ -257,6 +265,14 @@ fromSomeTh = bimap fromIntegral copyBits . fromSomeThRaw
 fromSomeThRaw :: SomeTh -> (SNatRep, ThRep)
 fromSomeThRaw = withSomeTh (\n _m nm -> (n.snatRep, nm.thRep))
 {-# INLINE fromSomeThRaw #-}
+
+bitsToThRep :: (Bits bs) => bs -> ThRep
+bitsToThRep = copyBits
+{-# INLINE bitsToThRep #-}
+
+thRepToBits :: (Bits bs) => ThRep -> bs
+thRepToBits = copyBits
+{-# INLINE thRepToBits #-}
 
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
 copyBits = go 0 zeroBits

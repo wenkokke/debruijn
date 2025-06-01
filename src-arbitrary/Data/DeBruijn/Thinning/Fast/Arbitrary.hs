@@ -1,7 +1,6 @@
 {-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE QuantifiedConstraints #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.DeBruijn.Thinning.Fast.Arbitrary (
@@ -20,11 +19,11 @@ import Test.QuickCheck.Gen (Gen, oneof)
 instance Arbitrary SomeTh where
   arbitrary :: Gen SomeTh
   arbitrary = do
-    SomeSNat lower <- arbitrary
-    SomeSNat delta <- arbitrary
-    value <- arbitraryTh lower delta
-    let upper = lower `plus` delta
-    pure SomeTh{..}
+    SomeSNat n <- arbitrary
+    SomeSNat d <- arbitrary
+    nm <- arbitraryTh n d
+    let m = n `plus` d
+    pure $ SomeTh n m nm
 
 arbitraryTh :: SNat n -> SNat m -> Gen (n :<= (n + m))
 arbitraryTh n Z = case plusUnitR n of Refl -> pure KeepAll

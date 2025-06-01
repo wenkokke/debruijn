@@ -6,11 +6,9 @@ module Data.DeBruijn.Index.Safe.Arbitrary (
   arbitraryIx,
 ) where
 
-import Data.DeBruijn.Index.Safe (Ix (..), SomeIx (..), toSomeIx)
+import Data.DeBruijn.Index.Safe (Ix (..), SomeIx (..), toSomeIxRaw)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton.Safe (SNat (..))
-import Numeric.Natural (Natural)
-import Numeric.Natural.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
 import Test.QuickCheck.Gen (Gen, oneof)
 import Test.QuickCheck.Modifiers (NonNegative (..), Positive (..))
@@ -20,7 +18,7 @@ instance Arbitrary SomeIx where
   arbitrary = do
     Positive boundOverIndex <- arbitrary
     NonNegative index <- arbitrary
-    pure $ toSomeIx @Natural (index + boundOverIndex, index)
+    pure $ toSomeIxRaw (fromIntegral index + boundOverIndex, index)
 
 instance Arbitrary (Ix (S Z)) where
   arbitrary :: Gen (Ix (S Z))

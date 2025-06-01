@@ -85,13 +85,13 @@ fromInductive FZ = Fast.FZ
 fromInductive (FS i) = Fast.FS (fromInductive i)
 
 -- | Convert an 'Ix' to 'Word'.
-{-# SPECIALIZE fromIx :: Ix n -> Int #-}
 fromIx :: (Integral i) => Ix n -> i
 fromIx = \case
   FZ -> 0
   FS i -> 1 + fromIx i
+{-# SPECIALIZE fromIx :: Ix n -> IxRep #-}
 
-fromIxRaw :: Ix n -> Int
+fromIxRaw :: Ix n -> IxRep
 fromIxRaw = fromIx
 {-# INLINE fromIxRaw #-}
 
@@ -153,10 +153,10 @@ withSomeIx action (SomeIx n i) = action n i
 
 prop> toSomeIx (fromSomeIx i) == i
 -}
-toSomeIx :: (Integral i) => (i, i) -> SomeIx
+toSomeIx :: (Integral n, Integral i) => (n, i) -> SomeIx
 toSomeIx (bound, index)
   | index < 0 = error $ printf "index cannot contain negative value, found index %d" (toInteger index)
-  | bound <= index = error "bound must be larger than index, found bound %d and index %d" (toInteger bound) (toInteger index)
+  | bound <= fromIntegral index = error "bound must be larger than index, found bound %d and index %d" (toInteger bound) (toInteger index)
   | bound >= 1, index == 0, SomeSNat n <- toSomeSNat (pred bound) = SomeIx (S n) FZ
   | SomeIx n i <- toSomeIx (pred bound, pred index) = SomeIx (S n) (FS i)
 
@@ -168,7 +168,7 @@ toSomeIxRaw :: (SNatRep, IxRep) -> SomeIx
 toSomeIxRaw = toSomeIx
 
 -- | @'fromSomeSNat' n@ returns the numeric representation of the wrapped index.
-fromSomeIx :: (Integral i) => SomeIx -> (i, i)
+fromSomeIx :: (Integral n, Integral i) => SomeIx -> (n, i)
 fromSomeIx = withSomeIx (\n i -> (fromSNat n, fromIx i))
 
 -- | @'fromSomeSNat' n@ returns the 'IxRep' representation of the wrapped index.

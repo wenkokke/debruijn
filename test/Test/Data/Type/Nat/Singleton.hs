@@ -3,6 +3,7 @@ module Test.Data.Type.Nat.Singleton (tests) where
 import Data.Maybe (isJust)
 import Data.Type.Nat.Singleton.Fast qualified as Fast
 import Data.Type.Nat.Singleton.Fast.Arbitrary ()
+import Data.Type.Nat.Singleton.Safe (SNatRep)
 import Data.Type.Nat.Singleton.Safe qualified as Fast (fromInductive, toInductive)
 import Data.Type.Nat.Singleton.Safe qualified as Safe
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
@@ -119,7 +120,7 @@ test_Fast_fromSomeSNat_eq_fromSomeSNatRaw n = do
     expect == actual
 
 -- | Test: @toSomeSNat == toSomeSNatRaw@.
-test_Fast_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Property
+test_Fast_toSomeSNat_eq_toSomeSNatRaw :: NonNegative SNatRep -> Property
 test_Fast_toSomeSNat_eq_toSomeSNatRaw (NonNegative nRep) = do
   let expect = Fast.toSomeSNat nRep
   let actual = Fast.toSomeSNatRaw nRep
@@ -135,7 +136,7 @@ test_Fast_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n = do
     expect == actual
 
 -- | Test: @fromSomeSNatRaw . toSomeSNatRaw == id@.
-test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Property
+test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative SNatRep -> Property
 test_Fast_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative nRep) = do
   let expect = nRep
   let actual = Fast.fromSomeSNatRaw (Fast.toSomeSNatRaw nRep)
@@ -159,7 +160,7 @@ test_Safe_fromSomeSNat_eq_fromSomeSNatRaw n = do
     expect == actual
 
 -- | Test: @toSomeSNat == toSomeSNatRaw@.
-test_Safe_toSomeSNat_eq_toSomeSNatRaw :: NonNegative Int -> Property
+test_Safe_toSomeSNat_eq_toSomeSNatRaw :: NonNegative SNatRep -> Property
 test_Safe_toSomeSNat_eq_toSomeSNatRaw (NonNegative nRep) = do
   let expect = Safe.toSomeSNat nRep
   let actual = Safe.toSomeSNatRaw nRep
@@ -175,7 +176,7 @@ test_Safe_toSomeSNatRaw_o_fromSomeSNatRaw_eq_id n = do
     expect == actual
 
 -- | Test: @fromSomeSNatRaw . toSomeSNatRaw == id@.
-test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative Int -> Property
+test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id :: NonNegative SNatRep -> Property
 test_Safe_fromSomeSNatRaw_o_toSomeSNatRaw_eq_id (NonNegative nRep) = do
   let expect = nRep
   let actual = Safe.fromSomeSNatRaw (Safe.toSomeSNatRaw nRep)
