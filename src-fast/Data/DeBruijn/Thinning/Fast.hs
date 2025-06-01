@@ -46,10 +46,10 @@ import Data.Type.Nat (Nat (..), Pos, Pred)
 import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
-#ifdef TH_AS_BITVEC
+#if defined(TH_AS_BITVEC)
 import Data.Bit (Bit)
 import Data.Vector.Unboxed (Vector)
-#elif TH_AS_WORD64
+#elif defined(TH_AS_WORD64)
 import Data.Word (Word64)
 #else
 #endif
@@ -58,9 +58,9 @@ import Data.Word (Word64)
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-#ifdef TH_AS_BITVEC
+#if defined(TH_AS_BITVEC)
 type ThRep = Vector Bit
-#elif TH_AS_WORD64
+#elif defined(TH_AS_WORD64)
 type ThRep = Word64
 #else
 type ThRep = Integer
@@ -259,7 +259,7 @@ withSomeTh action (SomeTh n m nm) = action n m nm
 
 -- | Convert a thinning into a bit sequence.
 fromSomeTh :: (Integral i, Bits bs) => SomeTh -> (i, bs)
-fromSomeTh = bimap fromIntegral copyBits . fromSomeThRaw
+fromSomeTh = bimap fromIntegral thRepToBits . fromSomeThRaw
 {-# INLINE fromSomeTh #-}
 
 fromSomeThRaw :: SomeTh -> (SNatRep, ThRep)
@@ -275,13 +275,18 @@ thRepToBits = copyBits
 {-# INLINE thRepToBits #-}
 
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
-copyBits = go 0 zeroBits
+copyBits bs = go 0 (shift zeroBits (bitCount bs)) bs
  where
   go :: Int -> bs2 -> bs1 -> bs2
   go i bs2 bs1
     | bs1 == zeroBits = bs2
     | testBit bs1 0 = go (i + 1) (setBit bs2 i) (shift bs1 (-1))
     | otherwise = go (i + 1) bs2 (shift bs1 (-1))
+
+bitCount :: (Bits bs) => bs -> Int
+bitCount bs
+  | bs == zeroBits = 0
+  | otherwise = 1 + bitCount (shift bs (-1))
 
 --------------------------------------------------------------------------------
 -- Thinning Class

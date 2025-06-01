@@ -4,6 +4,7 @@
 module Test.Data.DeBruijn.Index (tests) where
 
 import Data.DeBruijn.Index.Arbitrary (SomeIxRep (..))
+import Data.DeBruijn.Index.Fast (ixRepToSNatRep)
 import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.DeBruijn.Index.Fast.Arbitrary ()
 import Data.DeBruijn.Index.Safe (IxRep)
@@ -103,7 +104,7 @@ test_fromIxRawEq (Safe.SomeIx _ i) = do
 -- | Test: @thin@.
 test_thinEq :: (Positive SNatRep, NonNegative IxRep, NonNegative IxRep) -> Property
 test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
-  | let nRaw = dRaw + fromIntegral (iRaw `max` jRaw)
+  | let nRaw = dRaw + ixRepToSNatRep (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw + 1, iRaw)
   , Safe.SomeIx n' j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do
@@ -116,7 +117,7 @@ test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
 -- | Test: @thick@.
 test_thickEq :: (Positive SNatRep, NonNegative IxRep, NonNegative IxRep) -> Property
 test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
-  | let nRaw = dRaw + fromIntegral (iRaw `max` jRaw)
+  | let nRaw = dRaw + ixRepToSNatRep (iRaw `max` jRaw)
   , Safe.SomeIx (S n) i <- Safe.toSomeIxRaw (nRaw, iRaw)
   , Safe.SomeIx (S n') j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do

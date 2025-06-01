@@ -205,24 +205,36 @@ test_toSomeThRawEq (SomeThRep nRep nmRep) = do
 --------------------------------------------------------------------------------
 
 -- | Test: @fromSomeTh == fromSomeThRaw@.
-test_Fast_fromSomeTh_eq_fromSomeThRaw :: Fast.SomeTh -> Bool
-test_Fast_fromSomeTh_eq_fromSomeThRaw nm =
-  Fast.fromSomeTh nm == Fast.fromSomeThRaw nm
+test_Fast_fromSomeTh_eq_fromSomeThRaw :: Fast.SomeTh -> Property
+test_Fast_fromSomeTh_eq_fromSomeThRaw nm = do
+  let expect = Fast.fromSomeTh nm
+  let actual = Fast.fromSomeThRaw nm
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
 -- | Test: @toSomeTh == toSomeThRaw@.
-test_Fast_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Bool
-test_Fast_toSomeTh_eq_toSomeThRaw (SomeThRep nRep nmRep) =
-  Fast.toSomeTh (nRep, nmRep) == Fast.toSomeThRaw (nRep, nmRep)
+test_Fast_toSomeTh_eq_toSomeThRaw :: SomeThRep -> Property
+test_Fast_toSomeTh_eq_toSomeThRaw (SomeThRep nRep nmRep) = do
+  let expect = Fast.toSomeTh (nRep, nmRep)
+  let actual = Fast.toSomeThRaw (nRep, nmRep)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
 -- | Test: @toSomeThRaw . fromSomeThRaw == id@.
-test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id :: Fast.SomeTh -> Bool
-test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id nm =
-  Fast.toSomeThRaw (Fast.fromSomeThRaw nm) == nm
+test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id :: Fast.SomeTh -> Property
+test_Fast_toSomeThRaw_o_fromSomeThRaw_eq_id nm = do
+  let expect = nm
+  let actual = Fast.toSomeThRaw (Fast.fromSomeThRaw nm)
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
 -- | Test: @fromSomeThRaw . toSomeThRaw == id@.
-test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Bool
-test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep iRep) =
-  Fast.fromSomeThRaw (Fast.toSomeThRaw (nRep, iRep)) == (nRep, iRep)
+test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id :: SomeThRep -> Property
+test_Fast_fromSomeThRaw_o_toSomeThRaw_eq_id (SomeThRep nRep iRep) = do
+  let expect = (nRep, iRep)
+  let actual = Fast.fromSomeThRaw (Fast.toSomeThRaw (nRep, iRep))
+  counterexample (printf "%s == %s" (show expect) (show actual)) $
+    expect == actual
 
 -- Corollary: @toSomeTh . fromSomeTh == id@.
 
