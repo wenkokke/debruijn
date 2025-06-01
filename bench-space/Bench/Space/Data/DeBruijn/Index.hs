@@ -4,11 +4,11 @@
 module Bench.Space.Data.DeBruijn.Index where
 
 import Control.DeepSeq (force)
-import Data.DeBruijn.Index (SomeIx (..), thick, thin, toSomeIxRaw)
+import Data.DeBruijn.Index (IxRep, SomeIx (..), thick, thin, toSomeIxRaw)
 import Data.Foldable (traverse_)
 import Data.List (nub)
 import Data.Type.Equality (type (:~:) (Refl))
-import Data.Type.Nat.Singleton (SNat (..), decSNat)
+import Data.Type.Nat.Singleton (SNat (..), SNatRep, decSNat)
 import Text.Printf (printf)
 import Weigh (Weigh, func', wgroup)
 
@@ -25,7 +25,7 @@ benchmarks =
 bench_thin :: Weigh ()
 bench_thin = wgroup "thin" (traverse_ bench_thinWith bench_thinArgs)
 
-bench_thinWith :: (Int, Int, Int) -> Weigh ()
+bench_thinWith :: (SNatRep, IxRep, IxRep) -> Weigh ()
 bench_thinWith (nRaw, iRaw, jRaw)
   | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
   , SomeIx sn i <- force (toSomeIxRaw (nRaw + 1, iRaw))
@@ -34,7 +34,7 @@ bench_thinWith (nRaw, iRaw, jRaw)
       func' benchLabel (thin i) j
   | otherwise = error (printf "bench_thinWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
-bench_thinArgs :: [(Int, Int, Int)]
+bench_thinArgs :: [(SNatRep, IxRep, IxRep)]
 bench_thinArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
   evenSpreadBy5 =
@@ -54,7 +54,7 @@ bench_thinArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
 bench_thick :: Weigh ()
 bench_thick = wgroup "thick" (traverse_ bench_thickWith bench_thickArgs)
 
-bench_thickWith :: (Int, Int, Int) -> Weigh ()
+bench_thickWith :: (SNatRep, IxRep, IxRep) -> Weigh ()
 bench_thickWith (nRaw, iRaw, jRaw)
   | let !benchLabel = printf "[%d,%d]" iRaw jRaw :: String
   , SomeIx (S n) i <- force (toSomeIxRaw (nRaw, iRaw))
@@ -63,7 +63,7 @@ bench_thickWith (nRaw, iRaw, jRaw)
       func' benchLabel (thick i) j
   | otherwise = error (printf "bench_thickWith(%d,%d,%d): could not construct benchmark" nRaw iRaw jRaw)
 
-bench_thickArgs :: [(Int, Int, Int)]
+bench_thickArgs :: [(SNatRep, IxRep, IxRep)]
 bench_thickArgs = nub (evenSpreadBy5 <> alongTheDiagonal)
  where
   evenSpreadBy5 =

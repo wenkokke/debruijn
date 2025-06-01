@@ -18,8 +18,18 @@ flag safe
   manual:      True
   default:     False
 
-flag thinning-as-word
-  description: Use a Word represent thinnings.
+flag snat-as-word8
+  description: Use a Word8 to represent natural number singletons.
+  manual:      True
+  default:     False
+
+flag ix-as-word8
+  description: Use a Word8 to represent indexes.
+  manual:      True
+  default:     False
+
+flag th-as-word64
+  description: Use a Word to represent thinnings.
   manual:      True
   default:     False
 
@@ -100,8 +110,14 @@ library fast
     , data-debruijn:typenats
     , deepseq                 ^>=1.5
 
-  if flag(thinning-as-word)
-    cpp-options: -DTHINNING_AS_WORD
+  if flag(snat-as-word8)
+    cpp-options: -DSNAT_AS_WORD8
+
+  if flag(ix-as-word8)
+    cpp-options: -DIX_AS_WORD8
+
+  if flag(th-as-word64)
+    cpp-options: -DTH_AS_WORD64
 
   if flag(env-as-skew-list)
     build-depends: skew-list ^>=0.1

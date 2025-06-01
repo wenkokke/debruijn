@@ -18,7 +18,7 @@ module Data.DeBruijn.Environment.Fast (
   Env (UnsafeEnv, envRep),
 ) where
 
-import Data.DeBruijn.Index.Fast (Ix (ixRep))
+import Data.DeBruijn.Index.Fast (Ix (ixRep), ixRepToInt)
 import Data.Kind (Type)
 import Data.Type.Nat (Nat (..), Pos, Pred)
 import Unsafe.Coerce (unsafeCoerce)
@@ -149,4 +149,4 @@ pattern (:>) xs x <- (projectEnv -> SnocF xs x) where (:>) xs x = embedEnv (Snoc
 {-# COMPLETE Nil, (:>) #-}
 
 (!) :: Env n a -> Ix n -> a
-xs ! i = lookupRep i.ixRep xs.envRep
+xs ! i = lookupRep (ixRepToInt i.ixRep) xs.envRep

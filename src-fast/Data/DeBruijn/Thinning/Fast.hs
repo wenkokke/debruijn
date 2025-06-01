@@ -44,12 +44,16 @@ import Data.Type.Nat (Nat (..), Pos, Pred)
 import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
+#ifdef TH_AS_WORD64
+import Data.Word (Word64)
+#endif
+
 --------------------------------------------------------------------------------
 -- Thinning Representation
 --------------------------------------------------------------------------------
 
-#ifdef THINNING_AS_WORD
-type ThRep = Word
+#ifdef TH_AS_WORD64
+type ThRep = Word64
 #else
 type ThRep = Integer
 #endif
@@ -235,7 +239,7 @@ toSomeThRaw :: (SNatRep, ThRep) -> SomeTh
 toSomeThRaw (nRep, nmRep)
   | SomeSNat n <- toSomeSNatRaw nRep
   , let dRep = popCount nmRep
-  , SomeSNat d <- toSomeSNatRaw dRep
+  , SomeSNat d <- toSomeSNat dRep
   , let m = n `plus` d
   , let nm = UnsafeTh nmRep =
       SomeTh n m nm
