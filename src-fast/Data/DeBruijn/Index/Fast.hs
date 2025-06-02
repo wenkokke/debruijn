@@ -60,10 +60,12 @@ import Data.Word (Word8)
 -- DeBruijn Index Representation
 --------------------------------------------------------------------------------
 
-#ifdef IX_AS_WORD8
+#if defined(IX_AS_WORD8)
 type IxRep = Word8
-#else
+#elif defined(IX_AS_INT)
 type IxRep = Int
+#else
+#error "cpp: define one of [IX_AS_WORD8, IX_AS_INT]"
 #endif
 
 mkFZRep :: IxRep

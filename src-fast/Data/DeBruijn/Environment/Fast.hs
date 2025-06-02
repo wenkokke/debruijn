@@ -27,52 +27,22 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Conditional Imports
 --------------------------------------------------------------------------------
 
-#ifdef ENV_AS_SKEW_LIST
-
-import Data.SkewList.Strict (SkewList)
-import Data.SkewList.Strict qualified as SkewList
-
-#else
-
+#if defined(ENV_AS_SEQ)
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
 import Data.Maybe (fromJust)
-
+#elif defined(ENV_AS_SKEW_LIST)
+import Data.SkewList.Strict (SkewList)
+import Data.SkewList.Strict qualified as SkewList
 #endif
 
 --------------------------------------------------------------------------------
 -- Environment Representation
 --------------------------------------------------------------------------------
-#ifdef ENV_AS_SKEW_LIST
-
---------------------------------------------------------------------------------
--- Environment Representation: Skew List
-
-type EnvRep a = SkewList a
-
-mkNilRep :: EnvRep a
-mkNilRep = SkewList.Nil
-{-# INLINE mkNilRep #-}
-
-mkSnocRep :: EnvRep a -> a -> EnvRep a
-mkSnocRep xs x = SkewList.Cons x xs
-{-# INLINE mkSnocRep #-}
-
-elEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
-elEnvRep ifNil ifSnoc = \case
-  SkewList.Nil -> ifNil
-  SkewList.Cons x xs -> ifSnoc xs x
-{-# INLINE elEnvRep #-}
-
-lookupRep :: Int -> EnvRep a -> a
-lookupRep = flip (SkewList.!)
-{-# INLINE lookupRep #-}
-{-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
-
-#else
 
 --------------------------------------------------------------------------------
 -- Environment Representation: Finger Tree
+#if defined(ENV_AS_SEQ)
 
 type EnvRep a = Seq a
 
@@ -95,7 +65,37 @@ lookupRep = (fromJust .) . Seq.lookup
 {-# INLINE lookupRep #-}
 {-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
 
+--------------------------------------------------------------------------------
+-- Environment Representation: Skew List
+#elif defined(ENV_AS_SKEW_LIST)
+
+type EnvRep a = SkewList a
+
+mkNilRep :: EnvRep a
+mkNilRep = SkewList.Nil
+{-# INLINE mkNilRep #-}
+
+mkSnocRep :: EnvRep a -> a -> EnvRep a
+mkSnocRep xs x = SkewList.Cons x xs
+{-# INLINE mkSnocRep #-}
+
+elEnvRep :: b -> (EnvRep a -> a -> b) -> EnvRep a -> b
+elEnvRep ifNil ifSnoc = \case
+  SkewList.Nil -> ifNil
+  SkewList.Cons x xs -> ifSnoc xs x
+{-# INLINE elEnvRep #-}
+
+lookupRep :: Int -> EnvRep a -> a
+lookupRep = flip (SkewList.!)
+{-# INLINE lookupRep #-}
+{-# ANN lookupRep ("HLint: ignore Avoid partial function" :: String) #-}
+
+--------------------------------------------------------------------------------
+-- Environment Representation: None
+#else
+#error "cpp: define one of [ENV_AS_SEQ, ENV_AS_SKEW_LIST]"
 #endif
+
 --------------------------------------------------------------------------------
 -- Environments
 --------------------------------------------------------------------------------

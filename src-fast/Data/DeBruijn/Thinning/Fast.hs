@@ -49,9 +49,12 @@ import Unsafe.Coerce (unsafeCoerce)
 #if defined(TH_AS_BITVEC)
 import Data.Bit (Bit)
 import Data.Vector.Unboxed (Vector)
+#elif defined(TH_AS_INTEGER)
+-- No import needed for Integer
+#elif defined(TH_AS_NATURAL)
+import Numeric.Natural (Natural)
 #elif defined(TH_AS_WORD64)
 import Data.Word (Word64)
-#else
 #endif
 
 --------------------------------------------------------------------------------
@@ -60,10 +63,14 @@ import Data.Word (Word64)
 
 #if defined(TH_AS_BITVEC)
 type ThRep = Vector Bit
+#elif defined(TH_AS_INTEGER)
+type ThRep = Integer
+#elif defined(TH_AS_NATURAL)
+type ThRep = Natural
 #elif defined(TH_AS_WORD64)
 type ThRep = Word64
 #else
-type ThRep = Integer
+#error "cpp: define one of [TH_AS_BITVEC, TH_AS_INTEGER, TH_AS_NATURAL, TH_AS_WORD64]"
 #endif
 
 mkKeepAllRep :: ThRep
