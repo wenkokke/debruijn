@@ -203,6 +203,7 @@ library safe
     Data.DeBruijn.Environment.Safe
     Data.DeBruijn.Index.Safe
     Data.DeBruijn.Thinning.Safe
+    Data.DeBruijn.Thinning.Full.Safe
     Data.Type.Nat.Singleton.Safe
 
   build-depends:

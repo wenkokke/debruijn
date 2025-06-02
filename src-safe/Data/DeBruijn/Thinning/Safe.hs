@@ -144,24 +144,24 @@ instance NFData SomeTh where
   rnf :: SomeTh -> ()
   rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
 
-keepAllSomeTh :: SomeSNat -> SomeTh
-keepAllSomeTh (SomeSNat bound) =
+someKeepAll :: SomeSNat -> SomeTh
+someKeepAll (SomeSNat bound) =
   SomeTh
     { lower = bound
     , upper = bound
     , value = KeepAll
     }
 
-keepOneSomeTh :: SomeTh -> SomeTh
-keepOneSomeTh SomeTh{..} =
+someKeepOne :: SomeTh -> SomeTh
+someKeepOne SomeTh{..} =
   SomeTh
     { lower = S lower
     , upper = S upper
     , value = KeepOne value
     }
 
-dropOneSomeTh :: SomeTh -> SomeTh
-dropOneSomeTh SomeTh{..} =
+someDropOne :: SomeTh -> SomeTh
+someDropOne SomeTh{..} =
   SomeTh
     { lower = lower
     , upper = S upper
@@ -171,15 +171,15 @@ dropOneSomeTh SomeTh{..} =
 fromBools :: SomeSNat -> [Bool] -> SomeTh
 fromBools bound = go
  where
-  go [] = keepAllSomeTh bound
-  go (False : bools) = keepOneSomeTh (go bools)
-  go (True : bools) = dropOneSomeTh (go bools)
+  go [] = someKeepAll bound
+  go (False : bools) = someKeepOne (go bools)
+  go (True : bools) = someDropOne (go bools)
 
 toSomeTh :: (Show i, Show bs, Integral i, Bits bs) => (i, bs) -> SomeTh
 toSomeTh (nRep, nmRep)
-  | nmRep == zeroBits = keepAllSomeTh (toSomeSNat nRep)
-  | testBit nmRep 0 = dropOneSomeTh (toSomeTh (nRep, shift nmRep (-1)))
-  | otherwise = keepOneSomeTh (toSomeTh (nRep - 1, shift nmRep (-1)))
+  | nmRep == zeroBits = someKeepAll (toSomeSNat nRep)
+  | testBit nmRep 0 = someDropOne (toSomeTh (nRep, shift nmRep (-1)))
+  | otherwise = someKeepOne (toSomeTh (nRep - 1, shift nmRep (-1)))
 {-# SPECIALIZE toSomeTh :: (SNatRep, ThRep) -> SomeTh #-}
 
 toSomeThRaw :: (SNatRep, ThRep) -> SomeTh
