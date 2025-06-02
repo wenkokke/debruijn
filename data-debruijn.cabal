@@ -13,18 +13,53 @@ category:        Language
 build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
+--------------------------------------------------------------------------------
+-- Feature Flags for Underlying Representation
+--------------------------------------------------------------------------------
+
+-- Representation: Use safe inductive definitions for all types.
 flag safe
   description: Export the safe API.
   manual:      True
   default:     False
 
+-- Representation: Natural Number Singletons
 flag snat-as-word8
   description: Use a Word8 to represent natural number singletons.
   manual:      True
   default:     False
 
+flag snat-as-int
+  description:
+    Use an Int to represent natural number singletons. This is the default.
+
+  manual:      True
+  default:     True
+
+-- Representation: Indexes
 flag ix-as-word8
   description: Use a Word8 to represent indexes.
+  manual:      True
+  default:     False
+
+flag ix-as-int
+  description: Use an Int to represent indexes. This is the default.
+  manual:      True
+  default:     True
+
+-- Representation: Thinnings
+flag th-as-bitvec
+  description: Use a Bit Vector to represent thinnings.
+  manual:      True
+  default:     False
+
+flag th-as-integer
+  description: Use an Integer to represent thinnings. This is the default.
+  manual:      True
+  default:     True
+
+flag th-as-natural
+  description: Use a Natural to represent thinnings.
   manual:      True
   default:     False
 
@@ -33,17 +68,72 @@ flag th-as-word64
   manual:      True
   default:     False
 
-flag th-as-bitvec
-  description: Use a Bit Vector to represent thinnings.
+-- Representation: Environments
+flag env-as-seq
+  description:
+    Use Seq from the containers package to represent environments. This is the default.
+
   manual:      True
-  default:     False
+  default:     True
 
 flag env-as-skew-list
-  description: Use the skew-list package to represent environments.
+  description:
+    Use SkewList from the skew-list package to represent environments.
+
   manual:      True
   default:     False
 
+common flags
+  --------------------------------------------------------------------------------
+  -- Check for Missing Flags
+  --------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------
+  -- Natural Number Singletons
+  if (!flag(snat-as-word8) && !flag(snat-as-int))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Indexes
+  if (!flag(ix-as-word8) && !flag(ix-as-int))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Thinnings
+  if (((!flag(th-as-bitvec) && !flag(th-as-integer)) && !flag(th-as-natural)) && !flag(th-as-word64))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Environments
+  if (!flag(env-as-seq) && !flag(env-as-skew-list))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Check for Mutually Exclusive Flags
+  --------------------------------------------------------------------------------
+
+  --------------------------------------------------------------------------------
+  -- Natural Number Singletons
+  if (flag(snat-as-word8) && flag(snat-as-int))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Indexes
+  if (flag(ix-as-word8) && flag(ix-as-int))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Thinnings
+  if ((((((flag(th-as-bitvec) && flag(th-as-integer)) || (flag(th-as-bitvec) && flag(th-as-natural))) || (flag(th-as-bitvec) && flag(th-as-word64))) || (flag(th-as-integer) && flag(th-as-natural))) || (flag(th-as-integer) && flag(th-as-word64))) || (flag(th-as-natural) && flag(th-as-word64)))
+    buildable: False
+
+  --------------------------------------------------------------------------------
+  -- Environments
+  if (flag(env-as-seq) && flag(env-as-skew-list))
+    buildable: False
+
 common language
+  import:             flags
   ghc-options:
     -Wall -Wcompat -Widentities -Wprepositive-qualified-module
     -Wredundant-constraints -Wunticked-promoted-constructors
@@ -115,12 +205,21 @@ library fast
     , data-debruijn:typenats
     , deepseq                 ^>=1.5
 
+  -- Representation: Natural Number Singletons
   if flag(snat-as-word8)
     cpp-options: -DSNAT_AS_WORD8
 
+  if flag(snat-as-int)
+    cpp-options: -DSNAT_AS_INT
+
+  -- Representation: Indexes
   if flag(ix-as-word8)
     cpp-options: -DIX_AS_WORD8
 
+  if flag(ix-as-int)
+    cpp-options: -DIX_AS_INT
+
+  -- Representation: Thinnings
   if flag(th-as-bitvec)
     build-depends:
       , bitvec  ^>=1.1
@@ -128,15 +227,23 @@ library fast
 
     cpp-options:   -DTH_AS_BITVEC
 
+  if flag(th-as-integer)
+    cpp-options: -DTH_AS_INTEGER
+
+  if flag(th-as-natural)
+    cpp-options: -DTH_AS_NATURAL
+
   if flag(th-as-word64)
     cpp-options: -DTH_AS_WORD64
+
+  -- Representation: Environments
+  if flag(env-as-seq)
+    build-depends: containers >=0.6.8 && <0.9
+    cpp-options:   -DENV_AS_SEQ
 
   if flag(env-as-skew-list)
     build-depends: skew-list ^>=0.1
     cpp-options:   -DENV_AS_SKEW_LIST
-
-  else
-    build-depends: containers >=0.6.8 && <0.9
 
 library safe
   import:          language

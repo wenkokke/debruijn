@@ -69,10 +69,12 @@ import Data.Word (Word8)
 -- Natural Number Singleton Representation
 --------------------------------------------------------------------------------
 
-#ifdef SNAT_AS_WORD8
+#if defined(SNAT_AS_WORD8)
 type SNatRep = Word8
-#else
+#elif defined(SNAT_AS_INT)
 type SNatRep = Int
+#else
+#error "cpp: define one of [SNAT_AS_WORD8, SNAT_AS_INT]"
 #endif
 
 isValidSNatRep :: SNatRep -> Bool
