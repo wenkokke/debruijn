@@ -156,7 +156,7 @@ prop> toSomeIx (fromSomeIx i) == i
 toSomeIx :: (Integral n, Integral i) => (n, i) -> SomeIx
 toSomeIx (bound, index)
   | index < 0 = error $ printf "index cannot contain negative value, found index %d" (toInteger index)
-  | bound <= fromIntegral index = error "bound must be larger than index, found bound %d and index %d" (toInteger bound) (toInteger index)
+  | bound <= fromIntegral index = error $ printf "bound must be larger than index, found bound %d and index %d" (toInteger bound) (toInteger index)
   | bound >= 1, index == 0, SomeSNat n <- toSomeSNat (pred bound) = SomeIx (S n) FZ
   | SomeIx n i <- toSomeIx (pred bound, pred index) = SomeIx (S n) (FS i)
 

@@ -1,10 +1,12 @@
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ExplicitNamespaces #-}
+{-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Data.Type.Nat.Singleton.Safe.Arbitrary () where
 
-import Data.Type.Nat.Singleton.Safe (SomeSNat (..), fromSomeSNat, toSomeSNat)
-import Numeric.Natural (Natural)
-import Numeric.Natural.Arbitrary ()
+import Data.Type.Nat.Singleton.Arbitrary (getSNatRep)
+import Data.Type.Nat.Singleton.Safe (SomeSNat (..), fromSomeSNatRaw, toSomeSNatRaw)
 import Test.QuickCheck.Arbitrary (Arbitrary (..), CoArbitrary (..), shrinkIntegral)
 import Test.QuickCheck.Function (Function (..), functionMap, (:->))
 import Test.QuickCheck.Gen (Gen)
@@ -15,15 +17,15 @@ import Test.QuickCheck.Gen (Gen)
 
 instance Arbitrary SomeSNat where
   arbitrary :: Gen SomeSNat
-  arbitrary = fmap (toSomeSNat @Natural) arbitrary
+  arbitrary = toSomeSNatRaw . getSNatRep <$> arbitrary
 
   shrink :: SomeSNat -> [SomeSNat]
-  shrink = fmap (toSomeSNat @Natural) . shrinkIntegral . (fromSomeSNat @Natural)
+  shrink = fmap toSomeSNatRaw . shrinkIntegral . fromSomeSNatRaw
 
 instance CoArbitrary SomeSNat where
   coarbitrary :: SomeSNat -> Gen b -> Gen b
-  coarbitrary = coarbitrary . (fromSomeSNat @Natural)
+  coarbitrary = coarbitrary . fromSomeSNatRaw
 
 instance Function SomeSNat where
   function :: (SomeSNat -> b) -> SomeSNat :-> b
-  function = functionMap (fromSomeSNat @Natural) (toSomeSNat @Natural)
+  function = functionMap fromSomeSNatRaw toSomeSNatRaw

@@ -17,7 +17,6 @@
     - default: false
     - name: "-Wno-orphans"
       within:
-        - "Numeric.Natural.Arbitrary"
         - "Data.DeBruijn.Index.Fast.Arbitrary"
         - "Data.DeBruijn.Index.Safe.Arbitrary"
         - "Data.DeBruijn.Thinning.Fast.Arbitrary"
@@ -31,6 +30,9 @@
         - "Data.DeBruijn.Level.Fast"
         - "Data.DeBruijn.Thinning.Fast"
         - "Data.Type.Nat.Singleton.Fast"
+    - name: "-Wno-incomplete-patterns"
+      within:
+        - "Test.QuickCheck.Extra"
 
 # Control which modules can be used
 - modules:

@@ -6,21 +6,21 @@ module Test.Data.DeBruijn.Thinning (
   tests,
 ) where
 
+import Data.Bits (Bits (..))
 import Data.DeBruijn.Index.Safe qualified as Fast.Ix (fromInductive, toInductive)
-import Data.DeBruijn.Index.Safe qualified as Safe (Ix)
-import Data.DeBruijn.Index.Safe.Arbitrary qualified as Safe (arbitraryIx)
 import Data.DeBruijn.Thinning.Arbitrary (SomeThRep (..))
+import Data.DeBruijn.Thinning.Fast (ThRep)
 import Data.DeBruijn.Thinning.Fast qualified as Fast
 import Data.DeBruijn.Thinning.Fast.Arbitrary ()
 import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive)
 import Data.DeBruijn.Thinning.Safe qualified as Safe
-import Data.DeBruijn.Thinning.Safe.Arbitrary ()
-import Data.DeBruijn.Thinning.Safe.Arbitrary qualified as Safe
+import Data.DeBruijn.Thinning.Safe.Arbitrary (SomeThickIxArgs (..), SomeThinIxArgs (..), SomeThinThArgs (..))
 import Data.Type.Equality (type (:~:) (Refl))
+import Data.Type.Nat.Singleton.Safe (fromSNat)
 import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
-import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, plus)
+import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck (Arbitrary (..), Gen, Property, counterexample, once, testProperty)
+import Test.Tasty.QuickCheck (Property, counterexample, once, testProperty, (==>))
 import Text.Printf (printf)
 
 tests :: TestTree
@@ -62,21 +62,31 @@ test_KeepAllTh =
   once $
     Safe.KeepAll == Fast.toInductive Fast.KeepAll
 
+-- | Internal helper. Check if the test is within the safe range of fast thinnings.
+withinSafeThRange :: Safe.SNat n -> Bool
+withinSafeThRange n = maybe True (fromSNat n <=) (bitSizeMaybe (undefined :: ThRep))
+
+-- | Internal helper. Check if the test is within the safe range of fast thinnings.
+withinSafeThGrowRange :: Safe.SNat n -> Bool
+withinSafeThGrowRange n = maybe True (fromSNat n <) (bitSizeMaybe (undefined :: ThRep))
+
 -- | Test: Constructor @KeepOne@.
 test_KeepOneTh :: Safe.SomeTh -> Property
-test_KeepOneTh (Safe.SomeTh _n _m nm) = do
+test_KeepOneTh (Safe.SomeTh _n m nm) = do
   let expect = Safe.KeepOne nm
   let actual = Fast.toInductive (Fast.KeepOne (Fast.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
+    withinSafeThGrowRange m ==>
+      expect == actual
 
 -- | Test: Constructor @DropOne@.
 test_DropOneTh :: Safe.SomeTh -> Property
-test_DropOneTh (Safe.SomeTh _n _m nm) = do
+test_DropOneTh (Safe.SomeTh _n m nm) = do
   let expect = Safe.DropOne nm
   let actual = Fast.toInductive (Fast.DropOne (Fast.fromInductive nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
+    withinSafeThGrowRange m ==>
+      expect == actual
 
 -- TODO: Case analysis.
 
@@ -86,7 +96,8 @@ test_dropAllEq (Safe.SomeSNat n) = do
   let expect = Safe.dropAll n
   let actual = Fast.toInductive (Fast.dropAll (SNat.Fast.fromInductive n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
+    withinSafeThRange n ==>
+      expect == actual
 
 -- | Test: @toBools@.
 test_toBoolsEq :: Safe.SomeTh -> Property
@@ -96,64 +107,32 @@ test_toBoolsEq (Safe.SomeTh _n _m nm) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
-data SomeThinIxArgs = forall n m. SomeThinIxArgs (n Safe.:<= m) (Safe.Ix n)
-
-deriving stock instance Show SomeThinIxArgs
-
-instance Arbitrary SomeThinIxArgs where
-  arbitrary :: Gen SomeThinIxArgs
-  arbitrary = do
-    Safe.SomeSNat n <- arbitrary
-    Safe.SomeSNat m <- arbitrary
-    SomeThinIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S n)
-
 -- | Test: @thin@ from instance for indexes.
 test_thinIxEq :: SomeThinIxArgs -> Property
-test_thinIxEq (SomeThinIxArgs nm i) = do
+test_thinIxEq (SomeThinIxArgs _n m nm i) = do
   let expect = Safe.thin nm i
   let actual = Fast.Ix.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.Ix.fromInductive i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
-
-data SomeThickIxArgs = forall n m. SomeThickIxArgs (n Safe.:<= m) (Safe.Ix m)
-
-deriving stock instance Show SomeThickIxArgs
-
-instance Arbitrary SomeThickIxArgs where
-  arbitrary :: Gen SomeThickIxArgs
-  arbitrary = do
-    Safe.SomeSNat n <- arbitrary
-    Safe.SomeSNat m <- arbitrary
-    SomeThickIxArgs <$> Safe.arbitraryTh (Safe.S n) m <*> Safe.arbitraryIx (Safe.S (n `Safe.plus` m))
+    withinSafeThRange m ==>
+      expect == actual
 
 -- | Test: @thick@ from instance for indexes.
 test_thickIxEq :: SomeThickIxArgs -> Property
-test_thickIxEq (SomeThickIxArgs nm i) = do
+test_thickIxEq (SomeThickIxArgs _n m nm i) = do
   let expect = Safe.thick nm i
   let actual = Fast.Ix.toInductive <$> Fast.thick (Fast.fromInductive nm) (Fast.Ix.fromInductive i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
-
-data SomeThinThArgs = forall l n m. SomeThinThArgs (n Safe.:<= m) (l Safe.:<= n)
-
-deriving stock instance Show SomeThinThArgs
-
-instance Arbitrary SomeThinThArgs where
-  arbitrary :: Gen SomeThinThArgs
-  arbitrary = do
-    Safe.SomeSNat l <- arbitrary
-    Safe.SomeSNat dn <- arbitrary
-    let n = l `Safe.plus` dn
-    Safe.SomeSNat dm <- arbitrary
-    SomeThinThArgs <$> Safe.arbitraryTh n dm <*> Safe.arbitraryTh l dn
+    withinSafeThRange m ==>
+      expect == actual
 
 -- | Test: @thin@ from instance for thinnings.
 test_thinThEq :: SomeThinThArgs -> Property
-test_thinThEq (SomeThinThArgs nm ln) = do
+test_thinThEq (SomeThinThArgs _l _n m nm ln) = do
   let expect = Safe.thin nm ln
   let actual = Fast.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
-    expect == actual
+    withinSafeThRange m ==>
+      expect == actual
 
 -- TODO: @thick@ from instance for thinnings.
 -- This test is incredibly annoying to write, because its inputs are two
