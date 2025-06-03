@@ -231,7 +231,11 @@ library fast
     cpp-options: -DTH_AS_INTEGER
 
   if flag(th-as-natural)
-    cpp-options: -DTH_AS_NATURAL
+    build-depends:
+      , ghc-bignum
+      , ghc-prim
+
+    cpp-options:   -DTH_AS_NATURAL
 
   if flag(th-as-word64)
     cpp-options: -DTH_AS_WORD64
