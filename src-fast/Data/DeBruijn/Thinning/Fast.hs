@@ -81,26 +81,14 @@ type ThRep = Word64
 #error "cpp: define one of [TH_AS_BITVEC, TH_AS_INTEGER, TH_AS_NATURAL, TH_AS_WORD64]"
 #endif
 
-#if !defined(TH_AS_NATURAL)
-mkKeepAllRep :: ThRep
-mkKeepAllRep = zeroBits
-{-# INLINE mkKeepAllRep #-}
+--------------------------------------------------------------------------------
+-- Thinning Representation: Natural
+--
+-- NOTE:
+-- The implementation for Natural manually inlines the 'shift' and 'setBit'
+-- operations, as these functions are marked with 'NOINLINE' in ghc-bignum.
+#if defined(TH_AS_NATURAL)
 
-mkKeepOneRep :: ThRep -> ThRep
-mkKeepOneRep = (`shift` 1)
-{-# INLINE mkKeepOneRep #-}
-
-mkDropOneRep :: ThRep -> ThRep
-mkDropOneRep = (`setBit` 0) . (`shift` 1)
-{-# INLINE mkDropOneRep #-}
-
-elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
-elThRep ifKeepAll ifKeepOne ifDropOne th
-  | th == zeroBits = ifKeepAll
-  | testBit th 0 = ifDropOne (shift th (-1))
-  | otherwise = ifKeepOne (shift th (-1))
-{-# INLINE elThRep #-}
-#else
 mkKeepAllRep :: ThRep
 mkKeepAllRep = naturalZero
 {-# INLINE mkKeepAllRep #-}
@@ -142,6 +130,29 @@ thRepFromBigNat# x = case bigNatSize# x of
    0# -> naturalZero
    1# -> NS (bigNatIndex# x 0#)
    _  -> NB x
+
+--------------------------------------------------------------------------------
+-- Thinning Representation: Bits
+#else
+
+mkKeepAllRep :: ThRep
+mkKeepAllRep = zeroBits
+{-# INLINE mkKeepAllRep #-}
+
+mkKeepOneRep :: ThRep -> ThRep
+mkKeepOneRep = (`shift` 1)
+{-# INLINE mkKeepOneRep #-}
+
+mkDropOneRep :: ThRep -> ThRep
+mkDropOneRep = (`setBit` 0) . (`shift` 1)
+{-# INLINE mkDropOneRep #-}
+
+elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+elThRep ifKeepAll ifKeepOne ifDropOne th
+  | th == zeroBits = ifKeepAll
+  | testBit th 0 = ifDropOne (shift th (-1))
+  | otherwise = ifKeepOne (shift th (-1))
+{-# INLINE elThRep #-}
 #endif
 
 --------------------------------------------------------------------------------

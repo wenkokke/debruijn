@@ -14,13 +14,13 @@ bench-space-ix: \
 	data/bench-space-safe-ix.csv
 
 data/bench-space-fast-int-ix.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='+snat-as-int -snat-as-word8 +ix-as-int -ix-as-word8 -safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-space -v0 -- 'Data.DeBruijn.Index' --csv=$@
 
 data/bench-space-fast-word8-ix.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='-snat-as-int +snat-as-word8 -ix-as-int +ix-as-word8 -safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-space -v0 -f+snat-as-word8 -f+ix-as-word8 -- 'Data.DeBruijn.Index' --csv=$@
 
 data/bench-space-safe-ix.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='+snat-as-int -snat-as-word8 +ix-as-int -ix-as-word8 +safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-space -v0 -f+safe -- 'Data.DeBruijn.Index' --csv=$@
 
 ################################################################################
 # Benchmark: Indexes -- Time
@@ -32,13 +32,13 @@ bench-time-ix: \
 	data/bench-time-safe-ix.csv
 
 data/bench-time-fast-ix-as-int.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='+snat-as-int -snat-as-word8 +ix-as-int -ix-as-word8 -safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Index' --csv=$@
 
 data/bench-time-fast-th-as-word8-ix.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-snat-as-int +snat-as-word8 -ix-as-int +ix-as-word8 -safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-time -v0 -f+snat-as-word8 -f+ix-as-word8 -- 'Data.DeBruijn.Index' --csv=$@
 
 data/bench-time-safe-ix.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='+snat-as-int -snat-as-word8 +ix-as-int -ix-as-word8 +safe' -- 'Data.DeBruijn.Index' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Index' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings
@@ -56,19 +56,19 @@ bench-space-th: \
 	data/bench-space-safe-th-thinTh.csv
 
 data/bench-space-fast-th-as-bitvec-thinTh.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='+th-as-bitvec -th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-space -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-space-fast-th-as-integer-thinTh.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-space -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-space-fast-th-as-natural-thinTh.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='-th-as-bitvec -th-as-integer +th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-space -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-space-fast-th-as-word64-thinTh.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='-th-as-bitvec -th-as-integer -th-as-natural +th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-space -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-space-safe-th-thinTh.csv: $(SOURCE_FILES)
-	time cabal run bench-space -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 +safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-space -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Time -- Samples 1
@@ -82,19 +82,19 @@ bench-time-thinTh-samples1: \
 	data/bench-time-safe-th-thinTh-samples1.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='+th-as-bitvec -th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer +th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer -th-as-natural +th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 +safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Time -- Samples 2
@@ -108,19 +108,19 @@ bench-time-thinTh-samples2: \
 	data/bench-time-safe-th-thinTh-samples2.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='+th-as-bitvec -th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer +th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer -th-as-natural +th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 +safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Time -- Samples 3
@@ -134,16 +134,16 @@ bench-time-thinTh-samples3: \
 	data/bench-time-safe-th-thinTh-samples3.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='+th-as-bitvec -th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer +th-as-natural -th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec -th-as-integer -th-as-natural +th-as-word64 -safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 --flags='-th-as-bitvec +th-as-integer -th-as-natural -th-as-word64 +safe' -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
