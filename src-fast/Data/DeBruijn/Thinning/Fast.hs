@@ -10,6 +10,10 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
+#if defined(TH_AS_NATURAL)
+{-# LANGUAGE MagicHash #-}
+#endif
+
 module Data.DeBruijn.Thinning.Fast (
   -- * Thinnings
   (:<=) (KeepAll, KeepOne, DropOne),
@@ -52,7 +56,11 @@ import Data.Vector.Unboxed (Vector)
 #elif defined(TH_AS_INTEGER)
 -- No import needed for Integer
 #elif defined(TH_AS_NATURAL)
-import Numeric.Natural (Natural)
+import GHC.Num.BigNat (BigNat#, bigNatFromWord#, bigNatIndex#, bigNatShiftL#, bigNatShiftR#, bigNatOrWord#, bigNatTestBit#, bigNatSize#)
+import GHC.Num.Natural (Natural (..), naturalZero)
+import GHC.Num.Primitives (shiftRW#)
+import GHC.Prim (and#, clz#, geWord#, neWord#, or#, uncheckedShiftL#)
+import GHC.Types (isTrue#)
 #elif defined(TH_AS_WORD64)
 import Data.Word (Word64)
 #endif
@@ -73,6 +81,7 @@ type ThRep = Word64
 #error "cpp: define one of [TH_AS_BITVEC, TH_AS_INTEGER, TH_AS_NATURAL, TH_AS_WORD64]"
 #endif
 
+#if !defined(TH_AS_NATURAL)
 mkKeepAllRep :: ThRep
 mkKeepAllRep = zeroBits
 {-# INLINE mkKeepAllRep #-}
@@ -91,6 +100,49 @@ elThRep ifKeepAll ifKeepOne ifDropOne th
   | testBit th 0 = ifDropOne (shift th (-1))
   | otherwise = ifKeepOne (shift th (-1))
 {-# INLINE elThRep #-}
+#else
+mkKeepAllRep :: ThRep
+mkKeepAllRep = naturalZero
+{-# INLINE mkKeepAllRep #-}
+
+mkKeepOneRep :: ThRep -> ThRep
+mkKeepOneRep v@(NS x)
+   | 0## <- x                       = v
+   | isTrue# (clz# x `geWord#` 1##) = NS (x `uncheckedShiftL#` 1#)
+   | True                           = NB (bigNatFromWord# x `bigNatShiftL#` 1##)
+mkKeepOneRep (NB x)                 = NB (x `bigNatShiftL#` 1##)
+{-# INLINE mkKeepOneRep #-}
+
+mkDropOneRep :: ThRep -> ThRep
+mkDropOneRep (NS x)
+   | 0## <- x                       = NS 1##
+   | isTrue# (clz# x `geWord#` 1##) = NS ((x `uncheckedShiftL#` 1#) `or#` 1##)
+   | True                           = NB ((bigNatFromWord# x `bigNatShiftL#` 1##) `bigNatOrWord#` 1##)
+mkDropOneRep (NB x)                 = NB ((x `bigNatShiftL#` 1##) `bigNatOrWord#` 1##)
+{-# INLINE mkDropOneRep #-}
+
+elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+elThRep ifKeepAll ifKeepOne ifDropOne = go
+  where
+    go (NS w)
+      | 0## <- w = ifKeepAll
+      | isTrue# ((w `and#` 1##) `neWord#` 0##) = ifDropOne thRepArg
+      | otherwise = ifKeepOne thRepArg
+      where
+        thRepArg = NS (w `shiftRW#` 1##)
+    go (NB bn)
+      | isTrue# (bigNatTestBit# bn 0##) = ifDropOne thRepArg
+      | otherwise = ifKeepOne thRepArg
+      where
+        thRepArg = thRepFromBigNat# (bn `bigNatShiftR#` 1##)
+{-# INLINE elThRep #-}
+
+thRepFromBigNat# :: BigNat# -> ThRep
+thRepFromBigNat# x = case bigNatSize# x of
+   0# -> naturalZero
+   1# -> NS (bigNatIndex# x 0#)
+   _  -> NB x
+#endif
 
 --------------------------------------------------------------------------------
 -- Thinnings
