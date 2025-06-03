@@ -17,7 +17,7 @@ import Text.Printf (printf)
 benchmarks :: Benchmark
 benchmarks =
   bgroup
-    "Bench.Data.DeBruijn.Index"
+    "Data.DeBruijn.Index"
     [ bench_thin
     , bench_thick
     ]
