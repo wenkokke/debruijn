@@ -64,7 +64,7 @@ import Data.Word (Word8)
 type IxRep = Word8
 #elif defined(IX_AS_INT)
 type IxRep = Int
-#else
+#elif !defined(__HLINT__)
 #error "cpp: define one of [IX_AS_WORD8, IX_AS_INT]"
 #endif
 
