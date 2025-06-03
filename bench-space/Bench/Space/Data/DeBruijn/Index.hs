@@ -14,9 +14,8 @@ import Weigh (Weigh, func', wgroup)
 
 benchmarks :: Weigh ()
 benchmarks =
-  wgroup "Bench.Data.DeBruijn.Index" $ do
+  wgroup "Data.DeBruijn.Thinning" $ do
     bench_thin
-    bench_thick
 
 --------------------------------------------------------------------------------
 -- Benchmark: thin
