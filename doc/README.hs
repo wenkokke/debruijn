@@ -7,21 +7,6 @@
 module README where
 
 import Data.Kind (Type)
-import Data.Word (Word64)
-import Text.Printf (printf)
-
-newtype BitVec = BitVec {unBitVec :: Word64}
-  deriving (Num)
-
-instance Show BitVec where
-  show :: BitVec -> String
-  show = printf "0b%b" . (.unBitVec)
-
-foreign import capi unsafe "pdep.c pdep"
-  pdep :: BitVec -> BitVec -> BitVec
-
-foreign import capi unsafe "pext.c pext"
-  pext :: BitVec -> BitVec -> BitVec
 
 --------------------------------------------------------------------------------
 -- Safe Natural Numbers

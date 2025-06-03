@@ -113,9 +113,9 @@ fromTh = \case
   KeepAll -> zeroBits
   KeepOne n'm' -> (`shift` 1) . fromTh $ n'm'
   DropOne nm' -> (`setBit` 0) . (`shift` 1) . fromTh $ nm'
-{-# SPECIALIZE fromTh :: n :<= m -> Integer #-}
+{-# SPECIALIZE fromTh :: n :<= m -> ThRep #-}
 
-fromThRaw :: n :<= m -> Integer
+fromThRaw :: n :<= m -> ThRep
 fromThRaw = fromTh
 
 --------------------------------------------------------------------------------

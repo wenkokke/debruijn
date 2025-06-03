@@ -1,3 +1,4 @@
+{-# LANGUAGE CApiFFI #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExplicitNamespaces #-}
@@ -12,6 +13,7 @@
 
 #if defined(TH_AS_NATURAL) || defined(TH_AS_WORD64)
 {-# LANGUAGE MagicHash #-}
+#include "MachDeps.h"
 #endif
 
 module Data.DeBruijn.Thinning.Fast (
@@ -32,7 +34,6 @@ module Data.DeBruijn.Thinning.Fast (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
-  thinFast,
 
   -- * Fast
   ThRep,
@@ -48,7 +49,7 @@ import Data.DeBruijn.Index.Fast (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Fast (KnownNat, SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
+import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
 #if defined(TH_AS_BITVEC)
@@ -65,9 +66,8 @@ import GHC.Types (isTrue#)
 #elif defined(TH_AS_WORD64)
 import Control.Exception (ArithException (Overflow), throw)
 import Data.Bits (FiniteBits (..))
-import GHC.Prim ((-#), or#, not#, pext#, uncheckedShiftL#, word2Int#, popCnt#, bitReverse#)
-import GHC.Types (Word (W#), Int (I#))
-import Data.Type.Nat.Singleton.Fast (KnownNat (natSing), fromSNatRaw, intToSNatRep)
+import GHC.Prim (or#, not#, pdep#)
+import GHC.Types (Word (W#))
 #endif
 
 --------------------------------------------------------------------------------
@@ -185,6 +185,18 @@ elThRep ifKeepAll ifKeepOne ifDropOne r
   | testBit r 0 = ifDropOne (r `shift` (-1))
   | otherwise = ifKeepOne (r `shift` (-1))
 {-# INLINE elThRep #-}
+
+
+{-
+12<=29: 0b0000000000000000000000000000000000010101101010111010111110000110
+04<=12: 0b0000000000000000000000000000000000000000000000000000111111110000
+expect: 0b0000000000000000000000000000000000011111111111111111111111000110
+not nm: 0b1111111111111111111111111111111111101010010101000101000001111001
+dep ln: 0b0000000000000000000000000000000000001010010101000101000001000000
+-}
+thinThRep :: ThRep -> ThRep -> ThRep
+thinThRep (W# nm#) (W# ln#) = W# (nm# `or#` (pdep# ln# (not# nm#)))
+{-# INLINE thinThRep #-}
 #endif
 
 --------------------------------------------------------------------------------
@@ -420,12 +432,17 @@ instance Thin Ix where
 
 instance Thin ((:<=) l) where
   thin :: n :<= m -> l :<= n -> l :<= m
+#if defined(TH_AS_WORD64)
+  thin (UnsafeTh nm) (UnsafeTh ln) = UnsafeTh (thinThRep nm ln)
+#else
   thin nm KeepAll = nm
   thin KeepAll ln = ln
   thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
   thin (KeepOne n'm') (DropOne ln') = DropOne (thin n'm' ln')
   thin (DropOne nm') ln = DropOne (thin nm' ln)
+#endif
 
+{- ORMOLU_DISABLE -}
   thick :: n :<= m -> l :<= m -> Maybe (l :<= n)
   thick KeepAll lm = Just lm
   thick (KeepOne n'm') KeepAll = KeepOne <$> thick n'm' KeepAll
@@ -434,28 +451,4 @@ instance Thin ((:<=) l) where
   thick (DropOne _nm') KeepAll = Nothing
   thick (DropOne _nm') (KeepOne _l'n') = Nothing
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
-
-thinFast :: forall l n m. (KnownNat m) => n :<= m -> l :<= n -> l :<= m
-#if defined(TH_AS_WORD64)
-thinFast (UnsafeTh nm) (UnsafeTh ln) = UnsafeTh (nm .|. ln)
-  where
-    m = fromSNatRaw (natSing @m)
-    n = intToSNatRep (popCount nm)
-    d = m - n
--- (UnsafeTh (W# nm)) (UnsafeTh (W# ln)) = UnsafeTh (W# lm)
---   where
---     I# m = fromSNatRaw (natSing @m)
---     I# n = intToSNatRep (I# (word2Int# (popCnt# nm)))
---     -- d = m -# n
---     nmRev = bitReverse# nm
---     lnRev = bitReverse# ln -- (uncheckedShiftL# ln d)
---     lmRev = nmRev `or#` pext# lnRev (not# nmRev)
-    -- lm = bitReverse# lmRev
-  --   UnsafeTh (thinFastThRep 0 nm ln)
-
--- TODO: fix if defined(SNAT_AS_WORD8)
--- thinFastThRep :: SNatRep{-d-} -> ThRep{-n m-} -> ThRep{-l n-} -> ThRep{-l m-}
--- thinFastThRep (I# d) (W# nm) (W# ln) = W# (nm `or#` pext# (uncheckedShiftL# ln d) (not# nm))
-#else
-thinFast = thin
-#endif
+{- ORMOLU_ENABLE -}

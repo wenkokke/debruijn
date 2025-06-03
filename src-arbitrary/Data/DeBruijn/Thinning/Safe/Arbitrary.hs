@@ -22,6 +22,7 @@ import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), plusCommS, plusUn
 import Data.Type.Nat.Singleton.Safe qualified as Safe
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
+import Test.QuickCheck.Extra (chooseSizedBoundedIntegral)
 import Test.QuickCheck.Gen (Gen, oneof)
 
 instance Arbitrary SomeTh where
@@ -95,12 +96,16 @@ deriving stock instance Show SomeThinThArgs
 instance Arbitrary SomeThinThArgs where
   arbitrary :: Gen SomeThinThArgs
   arbitrary = do
-    Safe.SomeSNat l <- arbitrary
-    Safe.SomeSNat dn <- arbitrary
-    let n = l `Safe.plus` dn
-    Safe.SomeSNat dm <- arbitrary
-    let m = n `Safe.plus` dm
-    SomeThinThArgs l n m <$> arbitraryTh n dm <*> arbitraryTh l dn
+    SomeThBoundRep mRep <- arbitrary
+    nRep <- chooseSizedBoundedIntegral (0, mRep)
+    let dmRep = mRep - nRep
+    lRep <- chooseSizedBoundedIntegral (0, nRep)
+    let dnRep = nRep - lRep
+    case (Safe.toSomeSNatRaw lRep, Safe.toSomeSNatRaw dnRep, Safe.toSomeSNatRaw dmRep) of
+      (Safe.SomeSNat l, Safe.SomeSNat dn, Safe.SomeSNat dm) -> do
+        let n = l `Safe.plus` dn
+        let m = n `Safe.plus` dm
+        SomeThinThArgs l n m <$> arbitraryTh n dm <*> arbitraryTh l dn
 
 --------------------------------------------------------------------------------
 -- Helper Functions
