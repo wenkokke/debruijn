@@ -7,7 +7,8 @@ module Data.DeBruijn.Index.Arbitrary (
 import Data.DeBruijn.Index.Fast (IxRep, snatRepToIxRep)
 import Data.Type.Nat.Singleton.Fast (SNatRep)
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
-import Test.QuickCheck.Gen (Gen, chooseBoundedIntegral)
+import Test.QuickCheck.Extra (chooseSizedBoundedIntegral)
+import Test.QuickCheck.Gen (Gen)
 import Test.QuickCheck.Modifiers (Positive (..))
 
 data SomeIxRep = SomeIxRep !SNatRep !IxRep
@@ -16,6 +17,6 @@ data SomeIxRep = SomeIxRep !SNatRep !IxRep
 instance Arbitrary SomeIxRep where
   arbitrary :: Gen SomeIxRep
   arbitrary = do
-    Positive nRep <- arbitrary
-    iRep <- chooseBoundedIntegral (0, snatRepToIxRep nRep - 1)
+    nRep <- getPositive <$> arbitrary
+    iRep <- chooseSizedBoundedIntegral (0, snatRepToIxRep (nRep - 1))
     pure $ SomeIxRep nRep iRep

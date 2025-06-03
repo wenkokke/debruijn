@@ -6,20 +6,19 @@ module Data.DeBruijn.Index.Fast.Arbitrary (
   arbitraryIx,
 ) where
 
-import Data.DeBruijn.Index.Fast (Ix (..), SomeIx (..), ixRepToSNatRep, toSomeIxRaw)
+import Data.DeBruijn.Index.Arbitrary (SomeIxRep (..))
+import Data.DeBruijn.Index.Fast (Ix (..), SomeIx (..), toSomeIxRaw)
 import Data.Type.Nat (Nat (..))
 import Data.Type.Nat.Singleton.Fast (SNat (..))
 import Data.Type.Nat.Singleton.Fast.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
 import Test.QuickCheck.Gen (Gen, oneof)
-import Test.QuickCheck.Modifiers (NonNegative (..), Positive (..))
 
 instance Arbitrary SomeIx where
   arbitrary :: Gen SomeIx
   arbitrary = do
-    Positive boundOverIndex <- arbitrary
-    NonNegative index <- arbitrary
-    pure $ toSomeIxRaw (ixRepToSNatRep index + boundOverIndex, index)
+    SomeIxRep n i <- arbitrary
+    pure $ toSomeIxRaw (n, i)
 
 instance Arbitrary (Ix (S Z)) where
   arbitrary :: Gen (Ix (S Z))

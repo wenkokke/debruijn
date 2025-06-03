@@ -62,6 +62,8 @@ import GHC.Num.Primitives (shiftRW#)
 import GHC.Prim (and#, clz#, geWord#, neWord#, or#, uncheckedShiftL#)
 import GHC.Types (isTrue#)
 #elif defined(TH_AS_WORD64)
+import Control.Exception (ArithException (Overflow), throw)
+import Data.Bits (FiniteBits (..))
 import Data.Word (Word64)
 #endif
 
@@ -133,7 +135,7 @@ thRepFromBigNat# x = case bigNatSize# x of
 
 --------------------------------------------------------------------------------
 -- Thinning Representation: Bits
-#else
+#elif defined(TH_AS_BITVEC) || defined(TH_AS_INTEGER)
 
 mkKeepAllRep :: ThRep
 mkKeepAllRep = zeroBits
@@ -152,6 +154,33 @@ elThRep ifKeepAll ifKeepOne ifDropOne th
   | th == zeroBits = ifKeepAll
   | testBit th 0 = ifDropOne (shift th (-1))
   | otherwise = ifKeepOne (shift th (-1))
+{-# INLINE elThRep #-}
+
+--------------------------------------------------------------------------------
+-- Thinning Representation: Finite Bits
+#elif defined(TH_AS_WORD64)
+
+mkKeepAllRep :: ThRep
+mkKeepAllRep = zeroBits
+{-# INLINE mkKeepAllRep #-}
+
+mkKeepOneRep :: ThRep -> ThRep
+mkKeepOneRep r
+  | countLeadingZeros r < 1 = throw Overflow
+  | otherwise = r `shift` 1
+{-# INLINE mkKeepOneRep #-}
+
+mkDropOneRep :: ThRep -> ThRep
+mkDropOneRep r
+  | countLeadingZeros r < 1 = throw Overflow
+  | otherwise = r `shift` 1 .|. 1
+{-# INLINE mkDropOneRep #-}
+
+elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
+elThRep ifKeepAll ifKeepOne ifDropOne r
+  | r == zeroBits = ifKeepAll
+  | testBit r 0 = ifDropOne (r `shift` (-1))
+  | otherwise = ifKeepOne (r `shift` (-1))
 {-# INLINE elThRep #-}
 #endif
 

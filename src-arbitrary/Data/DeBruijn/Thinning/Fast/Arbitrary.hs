@@ -7,11 +7,12 @@ module Data.DeBruijn.Thinning.Fast.Arbitrary (
   arbitraryTh,
 ) where
 
-import Data.DeBruijn.Thinning.Fast (SomeTh (..), dropAll, type (:<=) (DropOne, KeepAll, KeepOne))
+import Data.DeBruijn.Thinning.Arbitrary (SomeThRep (..))
+import Data.DeBruijn.Thinning.Fast (SomeTh (..), dropAll, toSomeThRaw, type (:<=) (DropOne, KeepAll, KeepOne))
 import Data.Proxy (Proxy (..))
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (type (+))
-import Data.Type.Nat.Singleton.Fast (SNat (..), SomeSNat (..), plus, plusCommS, plusUnitR)
+import Data.Type.Nat.Singleton.Fast (SNat (..), plusCommS, plusUnitR)
 import Data.Type.Nat.Singleton.Fast.Arbitrary ()
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
 import Test.QuickCheck.Gen (Gen, oneof)
@@ -19,11 +20,8 @@ import Test.QuickCheck.Gen (Gen, oneof)
 instance Arbitrary SomeTh where
   arbitrary :: Gen SomeTh
   arbitrary = do
-    SomeSNat n <- arbitrary
-    SomeSNat d <- arbitrary
-    nm <- arbitraryTh n d
-    let m = n `plus` d
-    pure $ SomeTh n m nm
+    SomeThRep n nm <- arbitrary
+    pure $ toSomeThRaw (n, nm)
 
 arbitraryTh :: SNat n -> SNat m -> Gen (n :<= (n + m))
 arbitraryTh n Z = case plusUnitR n of Refl -> pure KeepAll

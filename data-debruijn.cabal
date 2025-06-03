@@ -215,6 +215,7 @@ library arbitrary
   import:          language
   visibility:      public
   hs-source-dirs:  src-arbitrary
+  other-modules:   Test.QuickCheck.Extra
   exposed-modules:
     Data.DeBruijn.Index.Arbitrary
     Data.DeBruijn.Index.Fast.Arbitrary
@@ -222,9 +223,9 @@ library arbitrary
     Data.DeBruijn.Thinning.Arbitrary
     Data.DeBruijn.Thinning.Fast.Arbitrary
     Data.DeBruijn.Thinning.Safe.Arbitrary
+    Data.Type.Nat.Singleton.Arbitrary
     Data.Type.Nat.Singleton.Fast.Arbitrary
     Data.Type.Nat.Singleton.Safe.Arbitrary
-    Numeric.Natural.Arbitrary
 
   build-depends:
     , base
