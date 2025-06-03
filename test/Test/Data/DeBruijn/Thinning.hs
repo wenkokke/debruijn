@@ -16,9 +16,10 @@ import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary (SomeThickIxArgs (..), SomeThinIxArgs (..), SomeThinThArgs (..))
 import Data.Type.Equality (type (:~:) (Refl))
+import Data.Type.Nat.Singleton.Fast qualified as SNat.Fast
 import Data.Type.Nat.Singleton.Safe (fromSNat)
 import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
-import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat)
+import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, fromSNatRaw)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Property, counterexample, once, testProperty, (==>))
 import Text.Printf (printf)
@@ -36,6 +37,7 @@ tests =
     , testProperty "test_thinIxEq" test_thinIxEq
     , testProperty "test_thickIxEq" test_thickIxEq
     , testProperty "test_thinThEq" test_thinThEq
+    , testProperty "test_thinFast_eq_thinTh" test_thinFast_eq_thinTh
     , testProperty "test_fromSomeThEq" test_fromSomeThEq
     , testProperty "test_fromSomeThRawEq" test_fromSomeThRawEq
     , testProperty "test_toSomeThEq" test_toSomeThEq
@@ -133,6 +135,27 @@ test_thinThEq (SomeThinThArgs _l _n m nm ln) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThRange m ==>
       expect == actual
+
+-- | Test: @thinFast == thin@.
+test_thinFast_eq_thinTh :: SomeThinThArgs -> Property
+test_thinFast_eq_thinTh (SomeThinThArgs l n m nm ln) = do
+  let expect = Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln)
+  let actual =
+        SNat.Fast.withKnownNat (SNat.Fast.fromInductive m) $
+          Fast.thinFast (Fast.fromInductive nm) (Fast.fromInductive ln)
+  counterexample
+    ( printf
+        "l: %d\nn: %d\nm: %d\nn <= m: %064b\nl <= n: %064b\nexpect: %064b\nactual: %064b"
+        (Safe.fromSNatRaw l)
+        (Safe.fromSNatRaw n)
+        (Safe.fromSNatRaw m)
+        (Safe.fromThRaw nm)
+        (Safe.fromThRaw ln)
+        (Fast.fromThRaw expect)
+        (Fast.fromThRaw actual)
+    )
+    $ withinSafeThRange m
+    ==> expect == actual
 
 -- TODO: @thick@ from instance for thinnings.
 -- This test is incredibly annoying to write, because its inputs are two

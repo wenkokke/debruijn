@@ -10,7 +10,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
-#if defined(TH_AS_NATURAL)
+#if defined(TH_AS_NATURAL) || defined(TH_AS_WORD64)
 {-# LANGUAGE MagicHash #-}
 #endif
 
@@ -32,6 +32,7 @@ module Data.DeBruijn.Thinning.Fast (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
+  thinFast,
 
   -- * Fast
   ThRep,
@@ -47,7 +48,7 @@ import Data.DeBruijn.Index.Fast (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
+import Data.Type.Nat.Singleton.Fast (KnownNat, SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
 #if defined(TH_AS_BITVEC)
@@ -64,7 +65,9 @@ import GHC.Types (isTrue#)
 #elif defined(TH_AS_WORD64)
 import Control.Exception (ArithException (Overflow), throw)
 import Data.Bits (FiniteBits (..))
-import Data.Word (Word64)
+import GHC.Prim ((-#), or#, not#, pext#, uncheckedShiftL#, word2Int#, popCnt#, bitReverse#)
+import GHC.Types (Word (W#), Int (I#))
+import Data.Type.Nat.Singleton.Fast (KnownNat (natSing), fromSNatRaw, intToSNatRep)
 #endif
 
 --------------------------------------------------------------------------------
@@ -78,7 +81,7 @@ type ThRep = Integer
 #elif defined(TH_AS_NATURAL)
 type ThRep = Natural
 #elif defined(TH_AS_WORD64)
-type ThRep = Word64
+type ThRep = Word
 #elif !defined(__HLINT__)
 #error "cpp: define one of [TH_AS_BITVEC, TH_AS_INTEGER, TH_AS_NATURAL, TH_AS_WORD64]"
 #endif
@@ -431,3 +434,28 @@ instance Thin ((:<=) l) where
   thick (DropOne _nm') KeepAll = Nothing
   thick (DropOne _nm') (KeepOne _l'n') = Nothing
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
+
+thinFast :: forall l n m. (KnownNat m) => n :<= m -> l :<= n -> l :<= m
+#if defined(TH_AS_WORD64)
+thinFast (UnsafeTh nm) (UnsafeTh ln) = UnsafeTh (nm .|. ln)
+  where
+    m = fromSNatRaw (natSing @m)
+    n = intToSNatRep (popCount nm)
+    d = m - n
+-- (UnsafeTh (W# nm)) (UnsafeTh (W# ln)) = UnsafeTh (W# lm)
+--   where
+--     I# m = fromSNatRaw (natSing @m)
+--     I# n = intToSNatRep (I# (word2Int# (popCnt# nm)))
+--     -- d = m -# n
+--     nmRev = bitReverse# nm
+--     lnRev = bitReverse# ln -- (uncheckedShiftL# ln d)
+--     lmRev = nmRev `or#` pext# lnRev (not# nmRev)
+    -- lm = bitReverse# lmRev
+  --   UnsafeTh (thinFastThRep 0 nm ln)
+
+-- TODO: fix if defined(SNAT_AS_WORD8)
+-- thinFastThRep :: SNatRep{-d-} -> ThRep{-n m-} -> ThRep{-l n-} -> ThRep{-l m-}
+-- thinFastThRep (I# d) (W# nm) (W# ln) = W# (nm `or#` pext# (uncheckedShiftL# ln d) (not# nm))
+#else
+thinFast = thin
+#endif
