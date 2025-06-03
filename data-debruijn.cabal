@@ -178,7 +178,8 @@ library fast
     cpp-options: -DTH_AS_INTEGER
 
   elif flag(th-as-word64)
-    cpp-options: -DTH_AS_WORD64
+    cpp-options:   -DTH_AS_WORD64
+    build-depends: ghc-prim ^>=0.11 || ^>=0.12 || ^>=0.13
 
   else
     cpp-options:   -DTH_AS_NATURAL
