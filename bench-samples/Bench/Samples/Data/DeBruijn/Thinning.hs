@@ -1,4 +1,4 @@
-module Bench.Time.Data.DeBruijn.Thinning.Samples (
+module Bench.Samples.Data.DeBruijn.Thinning (
   samples1,
   samples2,
   samples3,
