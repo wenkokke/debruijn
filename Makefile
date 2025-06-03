@@ -51,7 +51,7 @@ data/bench-time-safe-ix.csv: $(SOURCE_FILES)
 bench-space-th: \
 	data/bench-space-fast-th-as-bitvec-thinTh.csv \
 	data/bench-space-fast-th-as-integer-thinTh.csv \
-	data/bench-space-fast-th-as-natural-thinTh.csv \
+	data/bench-space-fast-th-as-natural-inline-thinTh.csv \
 	data/bench-space-fast-th-as-word64-thinTh.csv \
 	data/bench-space-safe-th-thinTh.csv
 
@@ -61,7 +61,7 @@ data/bench-space-fast-th-as-bitvec-thinTh.csv: $(SOURCE_FILES)
 data/bench-space-fast-th-as-integer-thinTh.csv: $(SOURCE_FILES)
 	time cabal run bench-space -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
 
-data/bench-space-fast-th-as-natural-thinTh.csv: $(SOURCE_FILES)
+data/bench-space-fast-th-as-natural-inline-thinTh.csv: $(SOURCE_FILES)
 	time cabal run bench-space -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
 
 data/bench-space-fast-th-as-word64-thinTh.csv: $(SOURCE_FILES)
