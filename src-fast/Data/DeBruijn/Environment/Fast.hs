@@ -92,7 +92,7 @@ lookupRep = flip (SkewList.!)
 
 --------------------------------------------------------------------------------
 -- Environment Representation: None
-#else
+#elif !defined(__HLINT__)
 #error "cpp: define one of [ENV_AS_SEQ, ENV_AS_SKEW_LIST]"
 #endif
 

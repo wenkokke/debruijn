@@ -69,7 +69,7 @@ type ThRep = Integer
 type ThRep = Natural
 #elif defined(TH_AS_WORD64)
 type ThRep = Word64
-#else
+#elif !defined(__HLINT__)
 #error "cpp: define one of [TH_AS_BITVEC, TH_AS_INTEGER, TH_AS_NATURAL, TH_AS_WORD64]"
 #endif
 
