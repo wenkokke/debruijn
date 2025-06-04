@@ -65,8 +65,7 @@ import Data.Vector.Unboxed (Vector)
 #elif defined(TH_AS_NATURAL)
 import GHC.Num.BigNat (BigNat#, bigNatFromWord#, bigNatIndex#, bigNatShiftL#, bigNatShiftR#, bigNatOrWord#, bigNatTestBit#, bigNatSize#)
 import GHC.Num.Natural (Natural (..), naturalZero)
-import GHC.Num.Primitives (shiftRW#)
-import GHC.Prim (and#, clz#, geWord#, neWord#, uncheckedShiftL#)
+import GHC.Prim (and#, clz#, geWord#, neWord#, uncheckedShiftL#, uncheckedShiftRL#)
 import GHC.Types (isTrue#)
 import Data.Type.Nat.Singleton.Fast (fromSNatRaw)
 #elif defined(TH_AS_WORD64)
@@ -131,7 +130,7 @@ elThRep ifKeepAll ifKeepOne ifDropOne = go
       | isTrue# ((w `and#` 1##) `neWord#` 0##) = ifDropOne thRepArg
       | otherwise = ifKeepOne thRepArg
       where
-        thRepArg = NS (w `shiftRW#` 1##)
+        thRepArg = NS (w `uncheckedShiftRL#` 1#)
     go (NB bn)
       | isTrue# (bigNatTestBit# bn 0##) = ifDropOne thRepArg
       | otherwise = ifKeepOne thRepArg
@@ -154,18 +153,18 @@ mkKeepAllRep = zeroBits
 {-# INLINE mkKeepAllRep #-}
 
 mkKeepOneRep :: ThRep -> ThRep
-mkKeepOneRep = (`shift` 1)
+mkKeepOneRep = (`unsafeShiftL` 1)
 {-# INLINE mkKeepOneRep #-}
 
 mkDropOneRep :: ThRep -> ThRep
-mkDropOneRep = (`setBit` 0) . (`shift` 1)
+mkDropOneRep = (`setBit` 0) . (`unsafeShiftL` 1)
 {-# INLINE mkDropOneRep #-}
 
 elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
 elThRep ifKeepAll ifKeepOne ifDropOne th
   | th == zeroBits = ifKeepAll
-  | testBit th 0 = ifDropOne (shift th (-1))
-  | otherwise = ifKeepOne (shift th (-1))
+  | testBit th 0 = ifDropOne (unsafeShiftR th 1)
+  | otherwise = ifKeepOne (unsafeShiftR th 1)
 {-# INLINE elThRep #-}
 
 --------------------------------------------------------------------------------
@@ -179,20 +178,20 @@ mkKeepAllRep = zeroBits
 mkKeepOneRep :: ThRep -> ThRep
 mkKeepOneRep r
   | countLeadingZeros r < 1 = throw Overflow
-  | otherwise = r `shift` 1
+  | otherwise = r `unsafeShiftL` 1
 {-# INLINE mkKeepOneRep #-}
 
 mkDropOneRep :: ThRep -> ThRep
 mkDropOneRep r
   | countLeadingZeros r < 1 = throw Overflow
-  | otherwise = r `shift` 1 .|. 1
+  | otherwise = r `unsafeShiftL` 1 .|. 1
 {-# INLINE mkDropOneRep #-}
 
 elThRep :: a -> (ThRep -> a) -> (ThRep -> a) -> ThRep -> a
 elThRep ifKeepAll ifKeepOne ifDropOne r
   | r == zeroBits = ifKeepAll
-  | testBit r 0 = ifDropOne (r `shift` (-1))
-  | otherwise = ifKeepOne (r `shift` (-1))
+  | testBit r 0 = ifDropOne (r `unsafeShiftR` 1)
+  | otherwise = ifKeepOne (r `unsafeShiftR` 1)
 {-# INLINE elThRep #-}
 #endif
 
@@ -296,8 +295,8 @@ toBools = \case
 fromTh :: (Bits bs) => n :<= m -> bs
 fromTh = \case
   KeepAll -> zeroBits
-  KeepOne n'm' -> (`shift` 1) . fromTh $ n'm'
-  DropOne nm' -> (`setBit` 0) . (`shift` 1) . fromTh $ nm'
+  KeepOne n'm' -> (`unsafeShiftL` 1) . fromTh $ n'm'
+  DropOne nm' -> (`setBit` 0) . (`unsafeShiftL` 1) . fromTh $ nm'
 {-# SPECIALIZE fromTh :: n :<= m -> ThRep #-}
 
 fromThRaw :: n :<= m -> ThRep
