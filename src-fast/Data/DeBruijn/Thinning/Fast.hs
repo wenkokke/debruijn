@@ -10,9 +10,13 @@
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 #if defined(TH_AS_NATURAL) || defined(TH_AS_WORD64)
 {-# LANGUAGE MagicHash #-}
+#endif
+
+#if defined(TH_AS_NATURAL)
 #include "MachDeps.h"
 #endif
 
@@ -34,6 +38,7 @@ module Data.DeBruijn.Thinning.Fast (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
+  thinThFast,
 
   -- * Fast
   ThRep,
@@ -49,7 +54,7 @@ import Data.DeBruijn.Index.Fast (Ix (..), isPos)
 import Data.Kind (Constraint, Type)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
-import Data.Type.Nat.Singleton.Fast (SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
+import Data.Type.Nat.Singleton.Fast (KnownNat (..), SNat (..), SNatRep, SomeSNat (..), decSNat, plus, toSomeSNat, toSomeSNatRaw)
 import Unsafe.Coerce (unsafeCoerce)
 
 #if defined(TH_AS_BITVEC)
@@ -61,13 +66,17 @@ import Data.Vector.Unboxed (Vector)
 import GHC.Num.BigNat (BigNat#, bigNatFromWord#, bigNatIndex#, bigNatShiftL#, bigNatShiftR#, bigNatOrWord#, bigNatTestBit#, bigNatSize#)
 import GHC.Num.Natural (Natural (..), naturalZero)
 import GHC.Num.Primitives (shiftRW#)
-import GHC.Prim (and#, clz#, geWord#, neWord#, or#, uncheckedShiftL#)
+import GHC.Prim (and#, clz#, geWord#, neWord#, uncheckedShiftL#)
 import GHC.Types (isTrue#)
+import Data.Type.Nat.Singleton.Fast (fromSNatRaw)
 #elif defined(TH_AS_WORD64)
 import Control.Exception (ArithException (Overflow), throw)
 import Data.Bits (FiniteBits (..))
-import GHC.Prim (or#, not#, pdep#)
 import GHC.Types (Word (W#))
+#endif
+-- Import for specialised thinning for Word
+#if defined(TH_AS_WORD64) || defined(TH_AS_NATURAL)
+import GHC.Prim (Word#, or#, not#, pdep#)
 #endif
 
 --------------------------------------------------------------------------------
@@ -185,8 +194,11 @@ elThRep ifKeepAll ifKeepOne ifDropOne r
   | testBit r 0 = ifDropOne (r `shift` (-1))
   | otherwise = ifKeepOne (r `shift` (-1))
 {-# INLINE elThRep #-}
+#endif
 
-
+--------------------------------------------------------------------------------
+-- Specialised Implementation of thin for Word
+#if defined(TH_AS_NATURAL) || defined(TH_AS_WORD64)
 {-
 12<=29: 0b0000000000000000000000000000000000010101101010111010111110000110
 04<=12: 0b0000000000000000000000000000000000000000000000000000111111110000
@@ -194,9 +206,9 @@ expect: 0b0000000000000000000000000000000000011111111111111111111111000110
 not nm: 0b1111111111111111111111111111111111101010010101000101000001111001
 dep ln: 0b0000000000000000000000000000000000001010010101000101000001000000
 -}
-thinThRep :: ThRep -> ThRep -> ThRep
-thinThRep (W# nm#) (W# ln#) = W# (nm# `or#` (pdep# ln# (not# nm#)))
-{-# INLINE thinThRep #-}
+thinWord# :: Word# -> Word# -> Word#
+thinWord# nm# ln# = nm# `or#` (pdep# ln# (not# nm#))
+{-# INLINE thinWord# #-}
 #endif
 
 --------------------------------------------------------------------------------
@@ -433,7 +445,7 @@ instance Thin Ix where
 instance Thin ((:<=) l) where
   thin :: n :<= m -> l :<= n -> l :<= m
 #if defined(TH_AS_WORD64)
-  thin (UnsafeTh nm) (UnsafeTh ln) = UnsafeTh (thinThRep nm ln)
+  thin (UnsafeTh (W# nm#)) (UnsafeTh (W# ln#)) = UnsafeTh (W# (thinWord# nm# ln#))
 #else
   thin nm KeepAll = nm
   thin KeepAll ln = ln
@@ -452,3 +464,16 @@ instance Thin ((:<=) l) where
   thick (DropOne _nm') (KeepOne _l'n') = Nothing
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
 {- ORMOLU_ENABLE -}
+
+thinThFast :: forall l n m. (KnownNat m) => n :<= m -> l :<= n -> l :<= m
+#if defined(TH_AS_NATURAL)
+thinThFast (UnsafeTh (NS nm#)) (UnsafeTh (NS ln#))
+  | let mRep = fromSNatRaw (natSing @m)
+  , mRep <= WORD_SIZE_IN_BITS
+  = UnsafeTh (NS (thinWord# nm# ln#))
+thinThFast nm ln = thin nm ln
+#elif defined(TH_AS_WORD64)
+thinThFast (UnsafeTh (W# nm#)) (UnsafeTh (W# ln#)) = UnsafeTh (W# (thinWord# nm# ln#))
+#else
+thinThFast = thin
+#endif

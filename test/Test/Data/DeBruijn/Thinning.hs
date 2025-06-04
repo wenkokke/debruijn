@@ -16,9 +16,11 @@ import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary (SomeThickIxArgs (..), SomeThinIxArgs (..), SomeThinThArgs (..))
 import Data.Type.Equality (type (:~:) (Refl))
+import Data.Type.Nat.Singleton.Fast qualified as SNat.Fast
 import Data.Type.Nat.Singleton.Safe (fromSNat)
 import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
 import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, fromSNatRaw)
+import Numeric.Natural (Natural)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (Property, counterexample, once, testProperty, (==>))
 import Text.Printf (printf)
@@ -36,6 +38,7 @@ tests =
     , testProperty "test_thinIxEq" test_thinIxEq
     , testProperty "test_thickIxEq" test_thickIxEq
     , testProperty "test_thinThEq" test_thinThEq
+    , testProperty "test_thinTh_eq_thinThFast" test_thinTh_eq_thinThFast
     , testProperty "test_fromSomeThEq" test_fromSomeThEq
     , testProperty "test_fromSomeThRawEq" test_fromSomeThRawEq
     , testProperty "test_toSomeThEq" test_toSomeThEq
@@ -138,8 +141,14 @@ test_thinThEq (SomeThinThArgs l n m nm ln) = do
   counterexample (showCase l n m nm ln expect actual) $
     expect == actual
 
-showBits :: ThRep -> String
-showBits = printf "0b%064b"
+-- | Test: @thin@ from instance for thinnings.
+test_thinTh_eq_thinThFast :: SomeThinThArgs -> Property
+test_thinTh_eq_thinThFast (SomeThinThArgs l n m nm ln) =
+  SNat.Fast.withKnownNat (SNat.Fast.fromInductive m) $ do
+    let expect = Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln)
+    let actual = Fast.thinThFast (Fast.fromInductive nm) (Fast.fromInductive ln)
+    counterexample (showCase l n m nm ln (Fast.toInductive expect) (Fast.toInductive actual)) $
+      expect == actual
 
 showCase :: Safe.SNat l -> Safe.SNat n -> Safe.SNat m -> n Safe.:<= m -> l Safe.:<= n -> l Safe.:<= m -> l Safe.:<= m -> String
 showCase l n m nm ln expect actual =
@@ -147,12 +156,15 @@ showCase l n m nm ln expect actual =
     "%02d<=%02d: %s\n%02d<=%02d: %s\nexpect: %s\nactual: %s"
     (Safe.fromSNatRaw n)
     (Safe.fromSNatRaw m)
-    (showBits $ Safe.fromTh nm)
+    (showBits nm)
     (Safe.fromSNatRaw l)
     (Safe.fromSNatRaw n)
-    (showBits $ Safe.fromTh ln)
-    (showBits $ Safe.fromThRaw expect)
-    (showBits $ Safe.fromThRaw actual)
+    (showBits ln)
+    (showBits expect)
+    (showBits actual)
+ where
+  showBits :: n Safe.:<= m -> String
+  showBits = printf "0b%064b" . Safe.fromTh @Natural
 
 -- TODO: @thick@ from instance for thinnings.
 -- This test is incredibly annoying to write, because its inputs are two
