@@ -47,10 +47,6 @@ import Data.Type.Nat.Singleton.Safe (KnownNat, SNat (..), SomeSNat (..), decSNat
 -- Thinnings
 --------------------------------------------------------------------------------
 
--- TODO:
--- This does not work, because it stores superfluous information, i.e., we're not
--- supposed to be able to tell the difference between @KeepAll@ and @KeepOne KeepAll@.
-
 -- | @n ':<=' m@ is the type of thinnings from @m@ to @n@.
 type (:<=) :: Nat -> Nat -> Type
 data (:<=) n m where
