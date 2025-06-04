@@ -6,8 +6,8 @@
 module Data.Type.Nat.Singleton.Safe (
   -- * Natural Number Singletons
   SNat (..),
-  toInductive,
-  fromInductive,
+  toSafe,
+  fromSafe,
   fromSNat,
   fromSNatRaw,
   plus,
@@ -76,14 +76,14 @@ instance NFData (SNat n) where
   rnf (S n) = rnf n
 
 -- | Convert from the efficient representation 'Fast.SNat' to the safe representation 'SNat'.
-toInductive :: Fast.SNat n -> SNat n
-toInductive Fast.Z = Z
-toInductive (Fast.S n) = S (toInductive n)
+toSafe :: Fast.SNat n -> SNat n
+toSafe Fast.Z = Z
+toSafe (Fast.S n) = S (toSafe n)
 
 -- | Convert from the safe representation 'SNat' to the efficient representation 'Fast.SNat'.
-fromInductive :: SNat n -> Fast.SNat n
-fromInductive Z = Fast.Z
-fromInductive (S n) = Fast.S (fromInductive n)
+fromSafe :: SNat n -> Fast.SNat n
+fromSafe Z = Fast.Z
+fromSafe (S n) = Fast.S (fromSafe n)
 
 -- | @'fromSNat' n@ returns the numeric representation of 'SNat n'.
 fromSNat :: (Integral i) => SNat n -> i

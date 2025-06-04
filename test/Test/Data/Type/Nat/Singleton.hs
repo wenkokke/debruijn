@@ -4,7 +4,7 @@ import Data.Maybe (isJust)
 import Data.Type.Nat.Singleton.Fast qualified as Fast
 import Data.Type.Nat.Singleton.Fast.Arbitrary ()
 import Data.Type.Nat.Singleton.Safe (SNatRep)
-import Data.Type.Nat.Singleton.Safe qualified as Fast (fromInductive, toInductive)
+import Data.Type.Nat.Singleton.Safe qualified as Fast (fromSafe, toSafe)
 import Data.Type.Nat.Singleton.Safe qualified as Safe
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
@@ -47,7 +47,7 @@ tests =
 test_fromSNatRawEq :: Safe.SomeSNat -> Property
 test_fromSNatRawEq (Safe.SomeSNat n) = do
   let expect = Safe.fromSNatRaw n
-  let actual = Fast.fromSNatRaw (Fast.fromInductive n)
+  let actual = Fast.fromSNatRaw (Fast.fromSafe n)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -55,7 +55,7 @@ test_fromSNatRawEq (Safe.SomeSNat n) = do
 test_fromSNatEq :: Safe.SomeSNat -> Property
 test_fromSNatEq (Safe.SomeSNat n) = do
   let expect = Safe.fromSNat @Int n
-  let actual = Fast.fromSNat @Int (Fast.fromInductive n)
+  let actual = Fast.fromSNat @Int (Fast.fromSafe n)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -65,7 +65,7 @@ test_fromSNatEq (Safe.SomeSNat n) = do
 test_decSNatEq :: Safe.SomeSNat -> Safe.SomeSNat -> Property
 test_decSNatEq (Safe.SomeSNat m) (Safe.SomeSNat n) = do
   let expect = Safe.decSNat m n
-  let actual = Fast.decSNat (Fast.fromInductive m) (Fast.fromInductive n)
+  let actual = Fast.decSNat (Fast.fromSafe m) (Fast.fromSafe n)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -73,7 +73,7 @@ test_decSNatEq (Safe.SomeSNat m) (Safe.SomeSNat n) = do
 test_fromSomeSNatEq :: Safe.SomeSNat -> Property
 test_fromSomeSNatEq (Safe.SomeSNat n) = do
   let expect = Safe.fromSomeSNat @Int (Safe.SomeSNat n)
-  let actual = Fast.fromSomeSNat (Fast.SomeSNat (Fast.fromInductive n))
+  let actual = Fast.fromSomeSNat (Fast.SomeSNat (Fast.fromSafe n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -81,7 +81,7 @@ test_fromSomeSNatEq (Safe.SomeSNat n) = do
 test_fromSomeSNatRawEq :: Safe.SomeSNat -> Property
 test_fromSomeSNatRawEq (Safe.SomeSNat n) = do
   let expect = Safe.fromSomeSNatRaw (Safe.SomeSNat n)
-  let actual = Fast.fromSomeSNatRaw (Fast.SomeSNat (Fast.fromInductive n))
+  let actual = Fast.fromSomeSNatRaw (Fast.SomeSNat (Fast.fromSafe n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -93,7 +93,7 @@ test_toSomeSNatEq (NonNegative nRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeSNat n1, Fast.SomeSNat n2) ->
-        isJust (n1 `Safe.decSNat` Fast.toInductive n2)
+        isJust (n1 `Safe.decSNat` Fast.toSafe n2)
 
 -- | Test: @toSomeSNatRaw@.
 test_toSomeSNatRawEq :: NonNegative Safe.SNatRep -> Property
@@ -103,7 +103,7 @@ test_toSomeSNatRawEq (NonNegative nRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeSNat n1, Fast.SomeSNat n2) ->
-        isJust (n1 `Safe.decSNat` Fast.toInductive n2)
+        isJust (n1 `Safe.decSNat` Fast.toSafe n2)
 
 -- TODO: @withKnownSNat@.
 

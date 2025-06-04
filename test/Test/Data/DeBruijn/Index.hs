@@ -8,12 +8,12 @@ import Data.DeBruijn.Index.Fast (ixRepToSNatRep)
 import Data.DeBruijn.Index.Fast qualified as Fast
 import Data.DeBruijn.Index.Fast.Arbitrary ()
 import Data.DeBruijn.Index.Safe (IxRep)
-import Data.DeBruijn.Index.Safe qualified as Fast (fromInductive, toInductive)
+import Data.DeBruijn.Index.Safe qualified as Fast (fromSafe, toSafe)
 import Data.DeBruijn.Index.Safe qualified as Safe
 import Data.DeBruijn.Index.Safe.Arbitrary ()
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat.Singleton.Safe (SNat (..), SNatRep)
-import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
+import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromSafe, toSafe)
 import Data.Type.Nat.Singleton.Safe qualified as Safe (SomeSNat (..), decSNat)
 import Data.Type.Nat.Singleton.Safe.Arbitrary ()
 import Test.Tasty (TestTree, testGroup)
@@ -59,29 +59,29 @@ tests =
 test_zeroIx :: Property
 test_zeroIx =
   once $
-    Safe.FZ == Fast.toInductive Fast.FZ
+    Safe.FZ == Fast.toSafe Fast.FZ
 
 -- | Test: Constructor @FS@.
 test_succIx :: Safe.SomeIx -> Property
 test_succIx (Safe.SomeIx _ i) = do
   let expect = Safe.FS i
-  let actual = Fast.toInductive (Fast.FS (Fast.fromInductive i))
+  let actual = Fast.toSafe (Fast.FS (Fast.fromSafe i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
 -- | Test: Case analysis.
 test_caseIx :: Safe.SomeIx -> Bool
 test_caseIx (Safe.SomeIx _ i) =
-  case (i, Fast.fromInductive i) of
+  case (i, Fast.fromSafe i) of
     (Safe.FZ, Fast.FZ) -> True
-    (Safe.FS i', Fast.FS j') -> i' == Fast.toInductive j'
+    (Safe.FS i', Fast.FS j') -> i' == Fast.toSafe j'
     _ -> False
 
 -- | Test: @eqIx@.
 test_eqIxEq :: Safe.SomeIx -> Safe.SomeIx -> Property
 test_eqIxEq (Safe.SomeIx _ i) (Safe.SomeIx _ j) = do
   let expect = Safe.eqIx i j
-  let actual = Fast.eqIx (Fast.fromInductive i) (Fast.fromInductive j)
+  let actual = Fast.eqIx (Fast.fromSafe i) (Fast.fromSafe j)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -89,7 +89,7 @@ test_eqIxEq (Safe.SomeIx _ i) (Safe.SomeIx _ j) = do
 test_fromIxEq :: Safe.SomeIx -> Property
 test_fromIxEq (Safe.SomeIx _ i) = do
   let expect = Safe.fromIx @Int i
-  let actual = Fast.fromIx @Int (Fast.fromInductive i)
+  let actual = Fast.fromIx @Int (Fast.fromSafe i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -97,7 +97,7 @@ test_fromIxEq (Safe.SomeIx _ i) = do
 test_fromIxRawEq :: Safe.SomeIx -> Property
 test_fromIxRawEq (Safe.SomeIx _ i) = do
   let expect = Safe.fromIxRaw i
-  let actual = Fast.fromIxRaw (Fast.fromInductive i)
+  let actual = Fast.fromIxRaw (Fast.fromSafe i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -109,7 +109,7 @@ test_thinEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   , Safe.SomeIx n' j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do
       let expect = Safe.thin i j
-      let actual = Fast.toInductive (Fast.thin (Fast.fromInductive i) (Fast.fromInductive j))
+      let actual = Fast.toSafe (Fast.thin (Fast.fromSafe i) (Fast.fromSafe j))
       counterexample (printf "%s == %s" (show expect) (show actual)) $
         expect == actual
   | otherwise = error "test_thinEq: could not construct test"
@@ -122,7 +122,7 @@ test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
   , Safe.SomeIx (S n') j <- Safe.toSomeIxRaw (nRaw, jRaw)
   , Just Refl <- Safe.decSNat n n' = do
       let expect = Safe.thick i j
-      let actual = Fast.toInductive <$> Fast.thick (Fast.fromInductive i) (Fast.fromInductive j)
+      let actual = Fast.toSafe <$> Fast.thick (Fast.fromSafe i) (Fast.fromSafe j)
       counterexample (printf "%s == %s" (show expect) (show actual)) $
         expect == actual
   | otherwise = error "test_thinEq: could not construct test"
@@ -131,7 +131,7 @@ test_thickEq (Positive dRaw, NonNegative iRaw, NonNegative jRaw)
 test_injectEq :: Safe.SomeIx -> Safe.SomeSNat -> Property
 test_injectEq (Safe.SomeIx _ i) (Safe.SomeSNat m) = do
   let expect = Safe.inject i m
-  let actual = Fast.toInductive (Fast.inject (Fast.fromInductive i) (SNat.Fast.fromInductive m))
+  let actual = Fast.toSafe (Fast.inject (Fast.fromSafe i) (SNat.Fast.fromSafe m))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -139,7 +139,7 @@ test_injectEq (Safe.SomeIx _ i) (Safe.SomeSNat m) = do
 test_raiseEq :: Safe.SomeSNat -> Safe.SomeIx -> Property
 test_raiseEq (Safe.SomeSNat n) (Safe.SomeIx _ j) = do
   let expect = Safe.raise n j
-  let actual = Fast.toInductive (Fast.raise (SNat.Fast.fromInductive n) (Fast.fromInductive j))
+  let actual = Fast.toSafe (Fast.raise (SNat.Fast.fromSafe n) (Fast.fromSafe j))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -147,7 +147,7 @@ test_raiseEq (Safe.SomeSNat n) (Safe.SomeIx _ j) = do
 test_fromSomeIxEq :: Safe.SomeIx -> Property
 test_fromSomeIxEq (Safe.SomeIx n i) = do
   let expect = Safe.fromSomeIx @SNatRep @IxRep (Safe.SomeIx n i)
-  let actual = Fast.fromSomeIx (Fast.SomeIx (SNat.Fast.fromInductive n) (Fast.fromInductive i))
+  let actual = Fast.fromSomeIx (Fast.SomeIx (SNat.Fast.fromSafe n) (Fast.fromSafe i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -155,7 +155,7 @@ test_fromSomeIxEq (Safe.SomeIx n i) = do
 test_fromSomeIxRawEq :: Safe.SomeIx -> Property
 test_fromSomeIxRawEq (Safe.SomeIx n i) = do
   let expect = Safe.fromSomeIxRaw (Safe.SomeIx n i)
-  let actual = Fast.fromSomeIxRaw (Fast.SomeIx (SNat.Fast.fromInductive n) (Fast.fromInductive i))
+  let actual = Fast.fromSomeIxRaw (Fast.SomeIx (SNat.Fast.fromSafe n) (Fast.fromSafe i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -167,8 +167,8 @@ test_toSomeIxEq (SomeIxRep nRep iRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeIx n1 i1, Fast.SomeIx n2 i2) ->
-        case n1 `Safe.decSNat` SNat.Fast.toInductive n2 of
-          Just Refl -> i1 == Fast.toInductive i2
+        case n1 `Safe.decSNat` SNat.Fast.toSafe n2 of
+          Just Refl -> i1 == Fast.toSafe i2
           Nothing -> False
 
 -- | Test: @toSomeIxRaw@.
@@ -179,8 +179,8 @@ test_toSomeIxRawEq (SomeIxRep nRep iRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeIx n1 i1, Fast.SomeIx n2 i2) ->
-        case n1 `Safe.decSNat` SNat.Fast.toInductive n2 of
-          Just Refl -> i1 == Fast.toInductive i2
+        case n1 `Safe.decSNat` SNat.Fast.toSafe n2 of
+          Just Refl -> i1 == Fast.toSafe i2
           Nothing -> False
 
 --------------------------------------------------------------------------------

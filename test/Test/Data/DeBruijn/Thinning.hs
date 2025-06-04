@@ -7,18 +7,18 @@ module Test.Data.DeBruijn.Thinning (
 ) where
 
 import Data.Bits (Bits (..))
-import Data.DeBruijn.Index.Safe qualified as Fast.Ix (fromInductive, toInductive)
+import Data.DeBruijn.Index.Safe qualified as Fast.Ix (fromSafe, toSafe)
 import Data.DeBruijn.Thinning.Arbitrary (SomeThRep (..))
 import Data.DeBruijn.Thinning.Fast (ThRep)
 import Data.DeBruijn.Thinning.Fast qualified as Fast
 import Data.DeBruijn.Thinning.Fast.Arbitrary ()
-import Data.DeBruijn.Thinning.Safe qualified as Fast (fromInductive, toInductive)
+import Data.DeBruijn.Thinning.Safe qualified as Fast (fromSafe, toSafe)
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary (SomeThickIxArgs (..), SomeThinIxArgs (..), SomeThinThArgs (..))
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat.Singleton.Fast qualified as SNat.Fast
 import Data.Type.Nat.Singleton.Safe (fromSNat)
-import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromInductive, toInductive)
+import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromSafe, toSafe)
 import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, fromSNatRaw)
 import Numeric.Natural (Natural)
 import Test.Tasty (TestTree, testGroup)
@@ -63,7 +63,7 @@ tests =
 test_KeepAllTh :: Property
 test_KeepAllTh =
   once $
-    Safe.KeepAll == Fast.toInductive Fast.KeepAll
+    Safe.KeepAll == Fast.toSafe Fast.KeepAll
 
 -- | Internal helper. Check if the test is within the safe range of fast thinnings.
 withinSafeThRange :: Safe.SNat n -> Bool
@@ -77,7 +77,7 @@ withinSafeThGrowRange n = maybe True (fromSNat n <) (bitSizeMaybe (undefined :: 
 test_KeepOneTh :: Safe.SomeTh -> Property
 test_KeepOneTh (Safe.SomeTh _n m nm) = do
   let expect = Safe.KeepOne nm
-  let actual = Fast.toInductive (Fast.KeepOne (Fast.fromInductive nm))
+  let actual = Fast.toSafe (Fast.KeepOne (Fast.fromSafe nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThGrowRange m ==>
       expect
@@ -87,7 +87,7 @@ test_KeepOneTh (Safe.SomeTh _n m nm) = do
 test_DropOneTh :: Safe.SomeTh -> Property
 test_DropOneTh (Safe.SomeTh _n m nm) = do
   let expect = Safe.DropOne nm
-  let actual = Fast.toInductive (Fast.DropOne (Fast.fromInductive nm))
+  let actual = Fast.toSafe (Fast.DropOne (Fast.fromSafe nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThGrowRange m ==>
       expect
@@ -99,7 +99,7 @@ test_DropOneTh (Safe.SomeTh _n m nm) = do
 test_dropAllEq :: Safe.SomeSNat -> Property
 test_dropAllEq (Safe.SomeSNat n) = do
   let expect = Safe.dropAll n
-  let actual = Fast.toInductive (Fast.dropAll (SNat.Fast.fromInductive n))
+  let actual = Fast.toSafe (Fast.dropAll (SNat.Fast.fromSafe n))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThRange n ==>
       expect
@@ -109,7 +109,7 @@ test_dropAllEq (Safe.SomeSNat n) = do
 test_toBoolsEq :: Safe.SomeTh -> Property
 test_toBoolsEq (Safe.SomeTh _n _m nm) = do
   let expect = Safe.toBools nm
-  let actual = Fast.toBools (Fast.fromInductive nm)
+  let actual = Fast.toBools (Fast.fromSafe nm)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -117,7 +117,7 @@ test_toBoolsEq (Safe.SomeTh _n _m nm) = do
 test_thinIxEq :: SomeThinIxArgs -> Property
 test_thinIxEq (SomeThinIxArgs _n m nm i) = do
   let expect = Safe.thin nm i
-  let actual = Fast.Ix.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.Ix.fromInductive i))
+  let actual = Fast.Ix.toSafe (Fast.thin (Fast.fromSafe nm) (Fast.Ix.fromSafe i))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThRange m ==>
       expect
@@ -127,7 +127,7 @@ test_thinIxEq (SomeThinIxArgs _n m nm i) = do
 test_thickIxEq :: SomeThickIxArgs -> Property
 test_thickIxEq (SomeThickIxArgs _n m nm i) = do
   let expect = Safe.thick nm i
-  let actual = Fast.Ix.toInductive <$> Fast.thick (Fast.fromInductive nm) (Fast.Ix.fromInductive i)
+  let actual = Fast.Ix.toSafe <$> Fast.thick (Fast.fromSafe nm) (Fast.Ix.fromSafe i)
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     withinSafeThRange m ==>
       expect
@@ -137,17 +137,17 @@ test_thickIxEq (SomeThickIxArgs _n m nm i) = do
 test_thinThEq :: SomeThinThArgs -> Property
 test_thinThEq (SomeThinThArgs l n m nm ln) = do
   let expect = Safe.thin nm ln
-  let actual = Fast.toInductive (Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln))
+  let actual = Fast.toSafe (Fast.thin (Fast.fromSafe nm) (Fast.fromSafe ln))
   counterexample (showCase l n m nm ln expect actual) $
     expect == actual
 
 -- | Test: @thin@ from instance for thinnings.
 test_thinTh_eq_thinThFast :: SomeThinThArgs -> Property
 test_thinTh_eq_thinThFast (SomeThinThArgs l n m nm ln) =
-  SNat.Fast.withKnownNat (SNat.Fast.fromInductive m) $ do
-    let expect = Fast.thin (Fast.fromInductive nm) (Fast.fromInductive ln)
-    let actual = Fast.thinThFast (Fast.fromInductive nm) (Fast.fromInductive ln)
-    counterexample (showCase l n m nm ln (Fast.toInductive expect) (Fast.toInductive actual)) $
+  SNat.Fast.withKnownNat (SNat.Fast.fromSafe m) $ do
+    let expect = Fast.thin (Fast.fromSafe nm) (Fast.fromSafe ln)
+    let actual = Fast.thinThFast (Fast.fromSafe nm) (Fast.fromSafe ln)
+    counterexample (showCase l n m nm ln (Fast.toSafe expect) (Fast.toSafe actual)) $
       expect == actual
 
 showCase :: Safe.SNat l -> Safe.SNat n -> Safe.SNat m -> n Safe.:<= m -> l Safe.:<= n -> l Safe.:<= m -> l Safe.:<= m -> String
@@ -175,7 +175,7 @@ showCase l n m nm ln expect actual =
 test_fromSomeThEq :: Safe.SomeTh -> Property
 test_fromSomeThEq (Safe.SomeTh n m nm) = do
   let expect = Safe.fromSomeTh @Int @Integer (Safe.SomeTh n m nm)
-  let actual = Fast.fromSomeTh (Fast.SomeTh (SNat.Fast.fromInductive n) (SNat.Fast.fromInductive m) (Fast.fromInductive nm))
+  let actual = Fast.fromSomeTh (Fast.SomeTh (SNat.Fast.fromSafe n) (SNat.Fast.fromSafe m) (Fast.fromSafe nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -183,7 +183,7 @@ test_fromSomeThEq (Safe.SomeTh n m nm) = do
 test_fromSomeThRawEq :: Safe.SomeTh -> Property
 test_fromSomeThRawEq (Safe.SomeTh n m nm) = do
   let expect = Safe.fromSomeThRaw (Safe.SomeTh n m nm)
-  let actual = Fast.fromSomeThRaw (Fast.SomeTh (SNat.Fast.fromInductive n) (SNat.Fast.fromInductive m) (Fast.fromInductive nm))
+  let actual = Fast.fromSomeThRaw (Fast.SomeTh (SNat.Fast.fromSafe n) (SNat.Fast.fromSafe m) (Fast.fromSafe nm))
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     expect == actual
 
@@ -195,8 +195,8 @@ test_toSomeThEq (SomeThRep nRep nmRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeTh n1 m1 nm1, Fast.SomeTh n2 m2 nm2) ->
-        case (n1 `Safe.decSNat` SNat.Fast.toInductive n2, m1 `Safe.decSNat` SNat.Fast.toInductive m2) of
-          (Just Refl, Just Refl) -> nm1 == Fast.toInductive nm2
+        case (n1 `Safe.decSNat` SNat.Fast.toSafe n2, m1 `Safe.decSNat` SNat.Fast.toSafe m2) of
+          (Just Refl, Just Refl) -> nm1 == Fast.toSafe nm2
           _otherwise -> False
 
 -- | Test: @toSomeThRaw@.
@@ -207,8 +207,8 @@ test_toSomeThRawEq (SomeThRep nRep nmRep) = do
   counterexample (printf "%s == %s" (show expect) (show actual)) $
     case (expect, actual) of
       (Safe.SomeTh n1 m1 nm1, Fast.SomeTh n2 m2 nm2) ->
-        case (n1 `Safe.decSNat` SNat.Fast.toInductive n2, m1 `Safe.decSNat` SNat.Fast.toInductive m2) of
-          (Just Refl, Just Refl) -> nm1 == Fast.toInductive nm2
+        case (n1 `Safe.decSNat` SNat.Fast.toSafe n2, m1 `Safe.decSNat` SNat.Fast.toSafe m2) of
+          (Just Refl, Just Refl) -> nm1 == Fast.toSafe nm2
           _otherwise -> False
 
 --------------------------------------------------------------------------------
