@@ -78,23 +78,27 @@ bench-time-thinTh-samples1: \
 	data/bench-time-fast-th-as-bitvec-thinTh-samples1.csv \
 	data/bench-time-fast-th-as-integer-thinTh-samples1.csv \
 	data/bench-time-fast-th-as-natural-thinTh-samples1.csv \
+	data/bench-time-fast-th-as-natural-thinThFast-samples1.csv \
 	data/bench-time-fast-th-as-word64-thinTh-samples1.csv \
 	data/bench-time-safe-th-thinTh-samples1.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
+
+data/bench-time-fast-th-as-natural-thinThFast-samples1.csv: $(SOURCE_FILES)
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thinThFast/' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples1.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Time -- Samples 2
@@ -104,23 +108,27 @@ bench-time-thinTh-samples2: \
 	data/bench-time-fast-th-as-bitvec-thinTh-samples2.csv \
 	data/bench-time-fast-th-as-integer-thinTh-samples2.csv \
 	data/bench-time-fast-th-as-natural-thinTh-samples2.csv \
+	data/bench-time-fast-th-as-natural-thinThFast-samples2.csv \
 	data/bench-time-fast-th-as-word64-thinTh-samples2.csv \
 	data/bench-time-safe-th-thinTh-samples2.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
+
+data/bench-time-fast-th-as-natural-thinThFast-samples2.csv: $(SOURCE_FILES)
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thinThFast/' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples2.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Time -- Samples 3
@@ -130,20 +138,24 @@ bench-time-thinTh-samples3: \
 	data/bench-time-fast-th-as-bitvec-thinTh-samples3.csv \
 	data/bench-time-fast-th-as-integer-thinTh-samples3.csv \
 	data/bench-time-fast-th-as-natural-thinTh-samples3.csv \
+	data/bench-time-fast-th-as-natural-thinThFast-samples3.csv \
 	data/bench-time-fast-th-as-word64-thinTh-samples3.csv \
 	data/bench-time-safe-th-thinTh-samples3.csv
 
 data/bench-time-fast-th-as-bitvec-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-bitvec -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-integer-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-integer -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-fast-th-as-natural-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
+
+data/bench-time-fast-th-as-natural-thinThFast-samples3.csv: $(SOURCE_FILES)
+	time cabal run bench-time -v0 -- 'Data.DeBruijn.Thinning/thinThFast/' --csv=$@
 
 data/bench-time-fast-th-as-word64-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+th-as-word64 -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
 
 data/bench-time-safe-th-thinTh-samples3.csv: $(SOURCE_FILES)
-	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning' --csv=$@
+	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Thinning/thin/' --csv=$@
