@@ -16,6 +16,17 @@ module Data.Type.Nat.Singleton (
   fromSomeSNat,
   fromSomeSNatRaw,
 
+  -- * Laws
+  plusUnitL,
+  plusUnitR,
+  plusCommS,
+  plusComm,
+  plusAssoc,
+
+  -- * Linking Type-Level and Value-Level
+  KnownNat (..),
+  withKnownNat,
+
   -- * Specialised target for conversion
   SNatRep,
 ) where
@@ -34,6 +45,13 @@ import Data.Type.Nat.Singleton.Safe (
   toSomeSNatRaw,
   withSomeSNat,
   SNatRep,
+  KnownNat (..),
+  withKnownNat,
+  plusUnitL,
+  plusUnitR,
+  plusCommS,
+  plusComm,
+  plusAssoc,
  )
 #else
 import Data.Type.Nat.Singleton.Fast (
@@ -48,6 +66,13 @@ import Data.Type.Nat.Singleton.Fast (
   toSomeSNat,
   toSomeSNatRaw,
   withSomeSNat,
+  KnownNat (..),
+  withKnownNat,
   SNatRep,
+  plusUnitL,
+  plusUnitR,
+  plusCommS,
+  plusComm,
+  plusAssoc,
  )
 #endif
