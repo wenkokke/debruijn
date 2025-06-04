@@ -33,10 +33,6 @@
     - name: "-Wno-incomplete-patterns"
       within:
         - "Test.QuickCheck.Extra"
-    - name: "-Wno-redundant-constraints"
-      within:
-        - "Data.DeBruijn.Thinning.Fast"
-        - "Data.DeBruijn.Thinning.Safe"
 
 # Control which modules can be used
 - modules:

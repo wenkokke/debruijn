@@ -16,7 +16,6 @@ import Data.DeBruijn.Thinning.Safe qualified as Fast (fromSafe, toSafe)
 import Data.DeBruijn.Thinning.Safe qualified as Safe
 import Data.DeBruijn.Thinning.Safe.Arbitrary (SomeThickIxArgs (..), SomeThinIxArgs (..), SomeThinThArgs (..))
 import Data.Type.Equality (type (:~:) (Refl))
-import Data.Type.Nat.Singleton.Fast qualified as SNat.Fast
 import Data.Type.Nat.Singleton.Safe (fromSNat)
 import Data.Type.Nat.Singleton.Safe qualified as SNat.Fast (fromSafe, toSafe)
 import Data.Type.Nat.Singleton.Safe qualified as Safe (SNat (..), SomeSNat (..), decSNat, fromSNatRaw)
@@ -38,7 +37,6 @@ tests =
     , testProperty "test_thinIxEq" test_thinIxEq
     , testProperty "test_thickIxEq" test_thickIxEq
     , testProperty "test_thinThEq" test_thinThEq
-    , testProperty "test_thinTh_eq_thinThFast" test_thinTh_eq_thinThFast
     , testProperty "test_fromSomeThEq" test_fromSomeThEq
     , testProperty "test_fromSomeThRawEq" test_fromSomeThRawEq
     , testProperty "test_toSomeThEq" test_toSomeThEq
@@ -140,15 +138,6 @@ test_thinThEq (SomeThinThArgs l n m nm ln) = do
   let actual = Fast.toSafe (Fast.thin (Fast.fromSafe nm) (Fast.fromSafe ln))
   counterexample (showCase l n m nm ln expect actual) $
     expect == actual
-
--- | Test: @thin@ from instance for thinnings.
-test_thinTh_eq_thinThFast :: SomeThinThArgs -> Property
-test_thinTh_eq_thinThFast (SomeThinThArgs l n m nm ln) =
-  SNat.Fast.withKnownNat (SNat.Fast.fromSafe m) $ do
-    let expect = Fast.thin (Fast.fromSafe nm) (Fast.fromSafe ln)
-    let actual = Fast.thinThFast (Fast.fromSafe nm) (Fast.fromSafe ln)
-    counterexample (showCase l n m nm ln (Fast.toSafe expect) (Fast.toSafe actual)) $
-      expect == actual
 
 showCase :: Safe.SNat l -> Safe.SNat n -> Safe.SNat m -> n Safe.:<= m -> l Safe.:<= n -> l Safe.:<= m -> l Safe.:<= m -> String
 showCase l n m nm ln expect actual =

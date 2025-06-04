@@ -17,7 +17,6 @@ module Data.DeBruijn.Thinning (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
-  thinThFast,
 
   -- * Specialised target for conversion
   ThRep,
@@ -28,7 +27,6 @@ import Data.DeBruijn.Thinning.Safe (
   SomeTh (..),
   Thin (..),
   dropAll,
-  thinThFast,
   toSomeTh,
   toSomeThRaw,
   fromBools,
@@ -43,7 +41,6 @@ import Data.DeBruijn.Thinning.Fast (
   SomeTh (..),
   Thin (..),
   dropAll,
-  thinThFast,
   toSomeTh,
   toSomeThRaw,
   fromBools,
