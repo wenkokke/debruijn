@@ -329,39 +329,39 @@ instance NFData SomeTh where
   rnf :: SomeTh -> ()
   rnf SomeTh{..} = rnf lower `seq` rnf upper `seq` rnf value
 
-keepAllSomeTh :: SomeSNat -> SomeTh
-keepAllSomeTh (SomeSNat bound) =
+someKeepAll :: SomeSNat -> SomeTh
+someKeepAll (SomeSNat bound) =
   SomeTh
     { lower = bound
     , upper = bound
     , value = KeepAll
     }
-{-# INLINE keepAllSomeTh #-}
+{-# INLINE someKeepAll #-}
 
-keepOneSomeTh :: SomeTh -> SomeTh
-keepOneSomeTh SomeTh{..} =
+someKeepOne :: SomeTh -> SomeTh
+someKeepOne SomeTh{..} =
   SomeTh
     { lower = S lower
     , upper = S upper
     , value = KeepOne value
     }
-{-# INLINE keepOneSomeTh #-}
+{-# INLINE someKeepOne #-}
 
-dropOneSomeTh :: SomeTh -> SomeTh
-dropOneSomeTh SomeTh{..} =
+someDropOne :: SomeTh -> SomeTh
+someDropOne SomeTh{..} =
   SomeTh
     { lower = lower
     , upper = S upper
     , value = DropOne value
     }
-{-# INLINE dropOneSomeTh #-}
+{-# INLINE someDropOne #-}
 
 fromBools :: (Integral i) => i -> [Bool] -> SomeTh
 fromBools bound = go
  where
-  go [] = keepAllSomeTh (toSomeSNat bound)
-  go (False : bools) = keepOneSomeTh (go bools)
-  go (True : bools) = dropOneSomeTh (go bools)
+  go [] = someKeepAll (toSomeSNat bound)
+  go (False : bools) = someKeepOne (go bools)
+  go (True : bools) = someDropOne (go bools)
 {-# SPECIALIZE fromBools :: SNatRep -> [Bool] -> SomeTh #-}
 
 toSomeTh :: (Integral i, Bits bs) => (i, bs) -> SomeTh
