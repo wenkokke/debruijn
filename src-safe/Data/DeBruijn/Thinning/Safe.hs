@@ -25,6 +25,7 @@ module Data.DeBruijn.Thinning.Safe (
 
   -- * The action of thinnings on 'Nat'-indexed types
   Thin (..),
+  thinThFast,
 
   -- * Specialised target for conversion
   ThRep,
@@ -39,7 +40,7 @@ import Data.Kind (Constraint, Type)
 import Data.Type.Equality (type (:~:) (Refl))
 import Data.Type.Nat (Nat (..), Pos, Pred)
 import Data.Type.Nat.Singleton.Fast (SNatRep)
-import Data.Type.Nat.Singleton.Safe (SNat (..), SomeSNat (..), decSNat, fromSNat, toSomeSNat)
+import Data.Type.Nat.Singleton.Safe (KnownNat, SNat (..), SomeSNat (..), decSNat, fromSNat, toSomeSNat)
 
 --------------------------------------------------------------------------------
 -- Thinnings
@@ -239,3 +240,10 @@ instance Thin ((:<=) l) where
   thick (DropOne _nm') KeepAll = Nothing
   thick (DropOne _nm') (KeepOne _l'n') = Nothing
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
+
+--------------------------------------------------------------------------------
+-- Fast Thinning Thinnings
+
+-- | Fast thinning thinnings for 'Natural' and 'Word' representations.
+thinThFast :: forall l n m. (KnownNat m) => n :<= m -> l :<= n -> l :<= m
+thinThFast = thin
