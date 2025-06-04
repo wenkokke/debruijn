@@ -120,6 +120,11 @@
       - "Bench.Space.Data.DeBruijn.Thinning"
       - "Bench.Time.Data.DeBruijn.Index"
       - "Bench.Time.Data.DeBruijn.Thinning"
+- ignore:
+    name: "Avoid partial function"
+    within:
+      - "Data.DeBruijn.Thinning.Fast"
+      - "Data.DeBruijn.Thinning.Safe"
 # Define some custom infix operators
 # - fixity: infixr 3 ~^#^~
 
