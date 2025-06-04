@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module Data.DeBruijn.Thinning.Safe (
   -- * Thinnings
