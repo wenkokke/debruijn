@@ -400,18 +400,18 @@ thRepToBits = copyBits
 {-# INLINE thRepToBits #-}
 
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
-copyBits bs = go 0 (shift zeroBits (bitCount bs)) bs
+copyBits bs = go 0 (unsafeShiftL zeroBits (bitCount bs)) bs
  where
   go :: Int -> bs2 -> bs1 -> bs2
   go i bs2 bs1
     | bs1 == zeroBits = bs2
-    | testBit bs1 0 = go (i + 1) (setBit bs2 i) (shift bs1 (-1))
-    | otherwise = go (i + 1) bs2 (shift bs1 (-1))
+    | testBit bs1 0 = go (i + 1) (setBit bs2 i) (unsafeShiftR bs1 1)
+    | otherwise = go (i + 1) bs2 (unsafeShiftR bs1 1)
 
 bitCount :: (Bits bs) => bs -> Int
 bitCount bs
   | bs == zeroBits = 0
-  | otherwise = 1 + bitCount (shift bs (-1))
+  | otherwise = 1 + bitCount (unsafeShiftR bs 1)
 
 --------------------------------------------------------------------------------
 -- Thinning Class

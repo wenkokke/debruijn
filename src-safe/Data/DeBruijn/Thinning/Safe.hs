@@ -109,8 +109,8 @@ toBools = \case
 fromTh :: (Bits bs) => n :<= m -> bs
 fromTh = \case
   KeepAll -> zeroBits
-  KeepOne n'm' -> (`shift` 1) . fromTh $ n'm'
-  DropOne nm' -> (`setBit` 0) . (`shift` 1) . fromTh $ nm'
+  KeepOne n'm' -> (`unsafeShiftL` 1) . fromTh $ n'm'
+  DropOne nm' -> (`setBit` 0) . (`unsafeShiftL` 1) . fromTh $ nm'
 {-# SPECIALIZE fromTh :: n :<= m -> ThRep #-}
 
 fromThRaw :: n :<= m -> ThRep
@@ -176,8 +176,8 @@ fromBools bound = go
 toSomeTh :: (Show i, Show bs, Integral i, Bits bs) => (i, bs) -> SomeTh
 toSomeTh (nRep, nmRep)
   | nmRep == zeroBits = someKeepAll (toSomeSNat nRep)
-  | testBit nmRep 0 = someDropOne (toSomeTh (nRep, shift nmRep (-1)))
-  | otherwise = someKeepOne (toSomeTh (nRep - 1, shift nmRep (-1)))
+  | testBit nmRep 0 = someDropOne (toSomeTh (nRep, unsafeShiftR nmRep 1))
+  | otherwise = someKeepOne (toSomeTh (nRep - 1, unsafeShiftR nmRep 1))
 {-# SPECIALIZE toSomeTh :: (SNatRep, ThRep) -> SomeTh #-}
 
 toSomeThRaw :: (SNatRep, ThRep) -> SomeTh
