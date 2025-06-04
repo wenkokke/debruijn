@@ -8,8 +8,8 @@ module Data.DeBruijn.Index.Safe (
   -- * DeBruijn indices
   Ix (FZ, FS),
   eqIx,
-  toInductive,
-  fromInductive,
+  toSafe,
+  fromSafe,
   fromIx,
   fromIxRaw,
   isPos,
@@ -75,14 +75,14 @@ instance NFData (Ix n) where
   rnf (FS i) = rnf i
 
 -- | Convert from the efficient representation 'Fast.Ix' to the safe representation 'Ix'.
-toInductive :: Fast.Ix n -> Ix n
-toInductive Fast.FZ = FZ
-toInductive (Fast.FS i) = FS (toInductive i)
+toSafe :: Fast.Ix n -> Ix n
+toSafe Fast.FZ = FZ
+toSafe (Fast.FS i) = FS (toSafe i)
 
 -- | Convert from the safe representation 'Ix' to the efficient representation 'Fast.Ix'.
-fromInductive :: Ix n -> Fast.Ix n
-fromInductive FZ = Fast.FZ
-fromInductive (FS i) = Fast.FS (fromInductive i)
+fromSafe :: Ix n -> Fast.Ix n
+fromSafe FZ = Fast.FZ
+fromSafe (FS i) = Fast.FS (fromSafe i)
 
 -- | Convert an 'Ix' to 'Word'.
 fromIx :: (Integral i) => Ix n -> i

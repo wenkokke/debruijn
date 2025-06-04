@@ -9,8 +9,8 @@
 module Data.DeBruijn.Thinning.Safe (
   -- * Thinnings
   (:<=) (KeepAll, KeepOne, DropOne),
-  toInductive,
-  fromInductive,
+  toSafe,
+  fromSafe,
   dropAll,
   toBools,
   fromTh,
@@ -80,18 +80,18 @@ instance NFData (n :<= m) where
   rnf (DropOne nm') = rnf nm'
 
 -- | Convert from the efficient representation 'Fast.:<=' to the safe representation ':<='.
-toInductive :: n Fast.:<= m -> n :<= m
-toInductive = \case
+toSafe :: n Fast.:<= m -> n :<= m
+toSafe = \case
   Fast.KeepAll -> KeepAll
-  Fast.KeepOne n'm' -> KeepOne (toInductive n'm')
-  Fast.DropOne nm' -> DropOne (toInductive nm')
+  Fast.KeepOne n'm' -> KeepOne (toSafe n'm')
+  Fast.DropOne nm' -> DropOne (toSafe nm')
 
 -- | Convert from the safe representation ':<=' to the efficient representation 'Fast.:<='.
-fromInductive :: n :<= m -> n Fast.:<= m
-fromInductive = \case
+fromSafe :: n :<= m -> n Fast.:<= m
+fromSafe = \case
   KeepAll -> Fast.KeepAll
-  KeepOne n'm' -> Fast.KeepOne (fromInductive n'm')
-  DropOne nm' -> Fast.DropOne (fromInductive nm')
+  KeepOne n'm' -> Fast.KeepOne (fromSafe n'm')
+  DropOne nm' -> Fast.DropOne (fromSafe nm')
 
 -- | Drop all entries.
 dropAll :: SNat m -> Z :<= m
