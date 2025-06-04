@@ -465,6 +465,10 @@ instance Thin ((:<=) l) where
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
 {- ORMOLU_ENABLE -}
 
+--------------------------------------------------------------------------------
+-- Fast Thinning Thinnings
+
+-- | Fast thinning thinnings for 'Natural' and 'Word' representations.
 thinThFast :: forall l n m. (KnownNat m) => n :<= m -> l :<= n -> l :<= m
 #if defined(TH_AS_NATURAL)
 thinThFast (UnsafeTh (NS nm#)) (UnsafeTh (NS ln#))
@@ -477,3 +481,4 @@ thinThFast (UnsafeTh (W# nm#)) (UnsafeTh (W# ln#)) = UnsafeTh (W# (thinWord# nm#
 #else
 thinThFast = thin
 #endif
+{-# INLINE thinThFast #-}
