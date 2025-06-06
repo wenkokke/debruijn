@@ -445,11 +445,19 @@ instance Thin ((:<=) l) where
   thin (UnsafeTh (NS nm#)) (UnsafeTh (NS ln#))
     | isTrue# (WORD_SIZE_IN_BITS## `minusWord#` clz# ln# `leWord#` popCnt# (not# nm#))
     = UnsafeTh (NS (thinWord# nm# ln#))
-  thin nm ln = thinSlow nm ln
+  thin nm KeepAll = nm
+  thin KeepAll ln = ln
+  thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
+  thin (KeepOne n'm') (DropOne ln') = DropOne (thin n'm' ln')
+  thin (DropOne nm') ln = DropOne (thin nm' ln)
 #elif defined(TH_AS_WORD64)
   thin (UnsafeTh (W# nm#)) (UnsafeTh (W# ln#)) = UnsafeTh (W# (thinWord# nm# ln#))
 #else
-  thin = thinSlow
+  thin nm KeepAll = nm
+  thin KeepAll ln = ln
+  thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
+  thin (KeepOne n'm') (DropOne ln') = DropOne (thin n'm' ln')
+  thin (DropOne nm') ln = DropOne (thin nm' ln)
 #endif
 
 {- ORMOLU_DISABLE -}
@@ -462,10 +470,3 @@ instance Thin ((:<=) l) where
   thick (DropOne _nm') (KeepOne _l'n') = Nothing
   thick (DropOne nm') (DropOne ln') = thick nm' ln'
 {- ORMOLU_ENABLE -}
-
-thinSlow :: n :<= m -> l :<= n -> l :<= m
-thinSlow nm KeepAll = nm
-thinSlow KeepAll ln = ln
-thinSlow (KeepOne n'm') (KeepOne l'n') = KeepOne (thinSlow n'm' l'n')
-thinSlow (KeepOne n'm') (DropOne ln') = DropOne (thinSlow n'm' ln')
-thinSlow (DropOne nm') ln = DropOne (thinSlow nm' ln)
