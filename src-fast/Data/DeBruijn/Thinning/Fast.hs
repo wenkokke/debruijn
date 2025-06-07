@@ -397,6 +397,7 @@ thRepToBits :: (Bits bs) => ThRep -> bs
 thRepToBits = copyBits
 {-# INLINE thRepToBits #-}
 
+-- TODO(optimise):
 copyBits :: forall bs1 bs2. (Bits bs1, Bits bs2) => bs1 -> bs2
 copyBits bs = go 0 (unsafeShiftL zeroBits (bitCount bs)) bs
  where
@@ -424,6 +425,10 @@ class Thin f where
 instance Thin Ix where
   thin :: n :<= m -> Ix n -> Ix m
   thin !t !i = isPos i $
+    -- TODO(optimise): this can be done in constant time by converting the
+    -- index to a 1-thinning, applying constant-time thinning composition,
+    -- and finally converting back to a number. the conversions should be
+    -- `bit` and `log2`, both of which consist of one instruction.
     case t of
       KeepAll -> i
       KeepOne n'm' ->
@@ -432,6 +437,7 @@ instance Thin Ix where
           FS i' -> FS (thin n'm' i')
       DropOne nm' -> FS (thin nm' i)
 
+  -- TODO(optimise):
   thick :: n :<= m -> Ix m -> Maybe (Ix n)
   thick KeepAll i = Just i
   thick (KeepOne _n'm') FZ = Just FZ
@@ -445,6 +451,8 @@ instance Thin ((:<=) l) where
   thin (UnsafeTh (NS nm#)) (UnsafeTh (NS ln#))
     | isTrue# (WORD_SIZE_IN_BITS## `minusWord#` clz# ln# `leWord#` popCnt# (not# nm#))
     = UnsafeTh (NS (thinWord# nm# ln#))
+  -- TODO(optimise): this can be done for the `NB` case by iterating the
+  -- `thinWord#` over all components of the `BigNat`.
   thin nm KeepAll = nm
   thin KeepAll ln = ln
   thin (KeepOne n'm') (KeepOne l'n') = KeepOne (thin n'm' l'n')
@@ -461,6 +469,7 @@ instance Thin ((:<=) l) where
 #endif
 
 {- ORMOLU_DISABLE -}
+  -- TODO(optimise):
   thick :: n :<= m -> l :<= m -> Maybe (l :<= n)
   thick KeepAll lm = Just lm
   thick (KeepOne n'm') KeepAll = KeepOne <$> thick n'm' KeepAll
