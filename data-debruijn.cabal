@@ -12,6 +12,7 @@ copyright:       2023 (c) Wen Kokke
 category:        Language
 build-type:      Simple
 extra-doc-files: CHANGELOG.md
+tested-with:     GHC ==9.6.7 || ==9.8.4 || ==9.10.2 || ==9.12.2
 
 --------------------------------------------------------------------------------
 -- Feature Flags for Underlying Representation
