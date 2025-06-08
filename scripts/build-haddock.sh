@@ -39,6 +39,8 @@ mkdir -p "./doc/reference/_build"
 cabal haddock \
   data-debruijn:lib:data-debruijn \
   data-debruijn:lib:typenats \
+  --enable-doc \
+  --haddock-for-hackage \
   --haddock-html \
   --haddock-hyperlink-source \
   --haddock-quickjump \
