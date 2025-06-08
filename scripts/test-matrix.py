@@ -7,7 +7,6 @@ ghc_version_list = [
   '9.10.2',
   '9.8.4',
   '9.6.7',
-  '9.4.8',
 ]
 
 # Feature flags
