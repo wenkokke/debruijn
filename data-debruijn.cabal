@@ -1,9 +1,23 @@
 cabal-version:   3.4
 name:            data-debruijn
 version:         0.1.0.0
-synopsis:        fast and type-safe implementation of DeBruijn indices.
 description:
-  See <https://github.com/wenkokke/gilear/blob/main/packages/data-debruijn/#README>
+  This package provides a well-scoped interface to optimised implementations of
+  common machinery used in compilers and type checkers.
+
+  [Type-Level Naturals]:
+      "Data.Type.Nat"
+
+      "Data.Type.Nat.Singleton"
+
+  [DeBruijn Indexes]
+      "Data.DeBruijn.Index"
+
+  [Thinnings]
+      "Data.DeBruijn.Thinning"
+
+  [Environments]
+      "Data.DeBruijn.Environment"
 
 license:         AGPL-3.0-only
 author:          Wen Kokke
