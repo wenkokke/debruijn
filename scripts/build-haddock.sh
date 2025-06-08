@@ -30,21 +30,36 @@ if [ "${ACTUAL_VERSION}" != "${EXPECT_VERSION}" ]; then
   [ "${CI}" = "" ] || exit 1
 fi
 
+# Empty and recreate the output and build directories
+rm -rf "./doc/reference/"
+mkdir -p "./doc/reference/_build"
+
 # Build the Haddock documentation for all local packages.
 # NOTE(cabal.project): This relies on the configuration under 'Documentation' in cabal.project.
-cabal haddock all
+cabal haddock \
+  data-debruijn:lib:data-debruijn \
+  data-debruijn:lib:typenats \
+  --haddock-html \
+  --haddock-hyperlink-source \
+  --haddock-quickjump \
+  --haddock-output-dir="./doc/reference/_build"
 
-# Create the './doc/reference' directory
-mkdir -p "./doc/reference/"
+# Copy relevant files from typenats
+cp "./doc/reference/_build/data-debruijn/typenats/Data-Type-Nat.html" "./doc/reference/_build/data-debruijn/"
+cp "./doc/reference/_build/data-debruijn/typenats/src/Data.Type.Nat.html" "./doc/reference/_build/data-debruijn/src/"
+rm -r "./doc/reference/_build/data-debruijn/fast"
+rm -r "./doc/reference/_build/data-debruijn/typenats"
+mv "./doc/reference/_build/data-debruijn"/* "./doc/reference/"
+rm -r "./doc/reference/_build"
 
 # Copy the Haddock documentation for each local package to the './doc/reference' directory
-find "./dist-newstyle/build" -type d -and -name "html" -exec cp -r {} ./doc/reference/ ';'
+# find "./dist-newstyle/build" -type d -and -name "html" -exec cp -r {} ./doc/reference/ ';'
 
 # Build the Haddock documentation index
 # NOTE(newpackage): This command must have one --read-interface argument for each package.
-${HADDOCK} \
-  -o ./doc/reference \
-  --quickjump \
-  --gen-index \
-  --gen-contents \
-  --read-interface=data-debruijn,./doc/reference/html/data-debruijn/data-debruijn.haddock
+# ${HADDOCK} \
+#   -o ./doc/reference \
+#   --quickjump \
+#   --gen-index \
+#   --gen-contents \
+#   --read-interface=data-debruijn,./doc/reference/html/data-debruijn/data-debruijn.haddock
