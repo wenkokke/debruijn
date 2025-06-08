@@ -37,6 +37,11 @@ source-repository head
   type:     git
   location: https://github.com/wenkokke/data-debruijn
 
+source-repository this
+  type:     git
+  location: https://github.com/wenkokke/data-debruijn
+  tag:      v0.1.0.0
+
 --------------------------------------------------------------------------------
 -- Feature Flags for Underlying Representation
 --------------------------------------------------------------------------------
