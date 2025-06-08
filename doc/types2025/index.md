@@ -4,7 +4,9 @@ theme: Fraunces, 1
 
 # [fit] Thinning Thinning
 
-# [fit] April Gonçalves and **Wen Kokke**
+# [fit] Fast and Safe Bits and Bobs for Type Checkers
+
+# [fit] by April Gonçalves and **Wen Kokke**
 
 ---
 
@@ -271,11 +273,11 @@ mkDrop nm = nm `shift` 1 .|. 1
 -- here's thinning thinnings – or thinning composition – to prove it!
 
 thinThin :: n ≤ m → l ≤ n → l ≤ m
-thinThin nm          Refl        = nm
-thinThin Refl        ln          = ln
-thinThin (Keep n'm') (Keep l'n') = Keep (thinThin n'm' l'n')
-thinThin (Keep n'm') (Drop ln')  = Drop (thinThin n'm' ln')
-thinThin (Drop nm')  ln          = Drop (thinThin nm' ln)
+thinThin nm        Refl      = nm
+thinThin Refl      ln        = ln
+thinThin (Keep nm) (Keep ln) = Keep (thinThin nm ln)
+thinThin (Keep nm) (Drop ln) = Drop (thinThin nm ln)
+thinThin (Drop nm) ln        = Drop (thinThin nm ln)
 
 -- have we learned our lesson? apparently not. make it faster!
 thinThin = coerce $ \nm ln → nm .|. (pdep ln (complement nm))
@@ -287,5 +289,22 @@ thinThin = coerce $ \nm ln → nm .|. (pdep ln (complement nm))
 
 # [fit] Wrapping up. Let's do a speed run.
 
-- Is it **safe**? Yes, QuickCheck says so. It didn't look past 64 bits.
-- Is it **fast**? Yes. Here's some graphs.
+- Released on Hackage as [data-debruijn](https://hackage.haskell.org/package/data-debruijn-0.1.0.0)
+
+- Is it **safe**? QuickCheck says yes. Every fast function, constructor, and pattern is checked against the safe version.
+
+- Is it **fast**? I say yes. Have some graphs.
+
+  ![inline scale:35%](thinIx-MeanCPU-arm64-Smooth-2.png) ![inline scale:35%](thinIx-MaxBytes-Smooth-2.png) ![inline scale:35%](thinTh-MeanCPU-x86-Smooth-3.png) ![inline scale:35%](thinTh-MaxBytes-Smooth-3.png)
+
+---
+
+![fit](thinIx-MeanCPU-arm64-Smooth-2.png)
+
+![fit](thinIx-MaxBytes-Smooth-2.png)
+
+---
+
+![fit](thinTh-MeanCPU-x86-Smooth-3.png)
+
+![fit](thinTh-MaxBytes-Smooth-3.png)
