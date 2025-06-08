@@ -116,15 +116,6 @@ library
   --       is used by the "reexported-modules" declaration.
   ghc-options:        -Wno-unused-packages
 
-library samples
-  import:         language
-  visibility:     private
-  hs-source-dirs: doc/samples
-  other-modules:  STLC
-  build-depends:
-    , base           >=4.17 && <5
-    , data-debruijn
-
 library typenats
   import:          language
   visibility:      public
@@ -228,6 +219,15 @@ library arbitrary
     , data-debruijn:safe
     , data-debruijn:typenats
     , QuickCheck              >=2.9 && <3.0
+
+library samples
+  import:         language
+  visibility:     private
+  hs-source-dirs: doc/samples
+  other-modules:  STLC
+  build-depends:
+    , base           >=4.17 && <5
+    , data-debruijn
 
 test-suite data-debruijn-tests
   import:         language
