@@ -47,41 +47,6 @@ flag safe
   manual:      True
   default:     False
 
--- Representation: Natural Number Singletons
-flag snat-as-word8
-  description:
-    Use a Word8 to represent natural number singletons.
-    The default is Int.
-
-  manual:      True
-  default:     False
-
--- Representation: Indexes
-flag ix-as-word8
-  description:
-    Use a Word8 to represent indexes.
-    The default is Int.
-
-  manual:      True
-  default:     False
-
--- Representation: Thinnings
-flag th-as-bitvec
-  description:
-    Use a Bit Vector to represent thinnings.
-    The default is Natural.
-
-  manual:      True
-  default:     False
-
-flag th-as-integer
-  description:
-    Use an Integer to represent thinnings. This is the default.
-    The default is Natural.
-
-  manual:      True
-  default:     False
-
 flag th-as-word64
   description:
     Use a Word to represent thinnings.
@@ -99,13 +64,7 @@ flag env-as-skew-list
   manual:      True
   default:     False
 
-common flags
-  -- Check for Mutually Exclusive Flags
-  if (((flag(th-as-bitvec) && flag(th-as-integer)) || (flag(th-as-bitvec) && flag(th-as-word64))) || (flag(th-as-integer) && flag(th-as-word64)))
-    buildable: False
-
 common language
-  import:             flags
   ghc-options:
     -Wall -Wcompat -Widentities -Wprepositive-qualified-module
     -Wredundant-constraints -Wunticked-promoted-constructors
@@ -162,30 +121,13 @@ library fast
     , deepseq                 ^>=1.4 || ^>=1.5
 
   -- Representation: Natural Number Singletons
-  if flag(snat-as-word8)
-    cpp-options: -DSNAT_AS_WORD8
-
-  else
-    cpp-options: -DSNAT_AS_INT
+  cpp-options: -DSNAT_AS_INT
 
   -- Representation: Indexes
-  if flag(ix-as-word8)
-    cpp-options: -DIX_AS_WORD8
-
-  else
-    cpp-options: -DIX_AS_INT
+  cpp-options: -DIX_AS_INT
 
   -- Representation: Thinnings
-  if flag(th-as-bitvec)
-    cpp-options:   -DTH_AS_BITVEC
-    build-depends:
-      , bitvec  ^>=1.1
-      , vector  ^>=0.13
-
-  elif flag(th-as-integer)
-    cpp-options: -DTH_AS_INTEGER
-
-  elif flag(th-as-word64)
+  if flag(th-as-word64)
     cpp-options:   -DTH_AS_WORD64
     build-depends: ghc-prim ^>=0.9 || ^>=0.10 || ^>=0.11 || ^>=0.12 || ^>=0.13
 
