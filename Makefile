@@ -1,7 +1,7 @@
 SOURCE_FILES := data-debruijn.cabal $(shell git ls-files '*.hs')
 
 ################################################################################
-# Benchmark: Indexes
+# Benchmarks
 ################################################################################
 
 ################################################################################
@@ -39,21 +39,6 @@ data/bench-time-fast-ix-as-word8.csv: $(SOURCE_FILES)
 
 data/bench-time-safe-ix.csv: $(SOURCE_FILES)
 	time cabal run bench-time -v0 -f+safe -- 'Data.DeBruijn.Index' --csv=$@
-
-################################################################################
-# Benchmark: Thinning Thinnings
-################################################################################
-
-.PHONY: bench-time-thinTh-vera
-bench-time-thinTh-vera: \
-	data/bench-time-fast-th-as-word64-thinTh-samples1.csv \
-	data/bench-time-safe-th-thinTh-samples1.csv \
-	data/bench-time-fast-th-as-natural-thinTh-samples2.csv \
-	data/bench-time-fast-th-as-word64-thinTh-samples2.csv \
-	data/bench-time-safe-th-thinTh-samples2.csv \
-	data/bench-time-fast-th-as-natural-thinTh-samples3.csv \
-	data/bench-time-fast-th-as-word64-thinTh-samples3.csv \
-	data/bench-time-safe-th-thinTh-samples3.csv \
 
 ################################################################################
 # Benchmark: Thinning Thinnings -- Space
