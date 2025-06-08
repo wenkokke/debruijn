@@ -121,10 +121,10 @@ library fast
     , deepseq                 ^>=1.4 || ^>=1.5
 
   -- Representation: Natural Number Singletons
-  cpp-options: -DSNAT_AS_INT
+  cpp-options:     -DSNAT_AS_INT
 
   -- Representation: Indexes
-  cpp-options: -DIX_AS_INT
+  cpp-options:     -DIX_AS_INT
 
   -- Representation: Thinnings
   if flag(th-as-word64)
@@ -184,72 +184,3 @@ library arbitrary
     , data-debruijn:safe
     , data-debruijn:typenats
     , QuickCheck              >=2.9 && <3.0
-
-library samples
-  import:         language
-  visibility:     private
-  hs-source-dirs: doc/samples
-  other-modules:  STLC
-  build-depends:
-    , base           >=4.17 && <5
-    , data-debruijn
-
-test-suite data-debruijn-tests
-  import:         language
-  type:           exitcode-stdio-1.0
-  main-is:        Main.hs
-  hs-source-dirs: test
-  other-modules:
-    Test.Data.DeBruijn.Index
-    Test.Data.DeBruijn.Thinning
-    Test.Data.Type.Nat.Singleton
-
-  build-depends:
-    , base
-    , data-debruijn:arbitrary
-    , data-debruijn:fast
-    , data-debruijn:safe
-    , tasty
-    , tasty-quickcheck
-
-benchmark bench-time
-  import:         language
-  type:           exitcode-stdio-1.0
-  main-is:        Main.hs
-  hs-source-dirs: bench-time
-  other-modules:
-    Bench.Time.Data.DeBruijn.Index
-    Bench.Time.Data.DeBruijn.Thinning
-
-  build-depends:
-    , base                         >=4.17 && <5
-    , criterion                    ^>=1.6
-    , data-debruijn
-    , data-debruijn:bench-samples
-    , deepseq                      ^>=1.4 || ^>=1.5
-
-benchmark bench-space
-  import:         language
-  type:           exitcode-stdio-1.0
-  main-is:        Main.hs
-  hs-source-dirs: bench-space
-  other-modules:
-    Bench.Space.Data.DeBruijn.Index
-    Bench.Space.Data.DeBruijn.Thinning
-
-  build-depends:
-    , base                         >=4.17    && <5
-    , bytestring
-    , cassava                      ^>=0.5
-    , data-debruijn
-    , data-debruijn:bench-samples
-    , deepseq                      ^>=1.4    || ^>=1.5
-    , optparse-applicative         ^>=0.18   || ^>=0.19
-    , weigh                        ^>=0.0.18
-
-library bench-samples
-  import:          language
-  visibility:      private
-  hs-source-dirs:  bench-samples
-  exposed-modules: Bench.Samples.Data.DeBruijn.Thinning
-  build-depends:   base >=4.17 && <5
