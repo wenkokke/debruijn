@@ -116,13 +116,6 @@ library
   --       is used by the "reexported-modules" declaration.
   ghc-options:        -Wno-unused-packages
 
-library README
-  import:         language
-  visibility:     private
-  hs-source-dirs: doc
-  other-modules:  README
-  build-depends:  base >=4.17 && <5
-
 library samples
   import:         language
   visibility:     private
