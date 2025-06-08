@@ -1,9 +1,10 @@
 cabal-version:   3.4
 name:            data-debruijn
 version:         0.1.0.0
+synopsis:        Fast and safe implementation of common compiler machinery.
 description:
-  This package provides a well-scoped interface to optimised implementations of
-  common machinery used in compilers and type checkers.
+  This package provides a safe interface to optimised implementations of common
+  machinery used in compilers and type checkers.
 
   [Type-Level Naturals]:
       "Data.Type.Nat"
@@ -22,11 +23,19 @@ description:
 license:         AGPL-3.0-only
 author:          Wen Kokke
 maintainer:      wenkokke@users.noreply.github.com
-copyright:       2023 (c) Wen Kokke
+copyright:
+  2023-2025 (c) Wen Kokke
+  2025 (c) April Gonçalves
+  2025 (c) Well-Typed LLC
+
 category:        Language
 build-type:      Simple
 extra-doc-files: CHANGELOG.md
 tested-with:     GHC ==9.6.7 || ==9.8.4 || ==9.10.2 || ==9.12.2
+
+source-repository head
+  type:     git
+  location: https://github.com/wenkokke/data-debruijn
 
 --------------------------------------------------------------------------------
 -- Feature Flags for Underlying Representation
