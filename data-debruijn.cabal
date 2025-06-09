@@ -144,7 +144,7 @@ library typenats
   visibility:      public
   hs-source-dirs:  src-typenats
   exposed-modules: Data.Type.Nat
-  build-depends:   base >=4.17 && <5
+  build-depends:   base >=4.18 && <5
 
 library fast
   import:          language
@@ -157,7 +157,7 @@ library fast
     Data.Type.Nat.Singleton.Fast
 
   build-depends:
-    , base                    >=4.17 && <5
+    , base                    >=4.18 && <5
     , data-debruijn:typenats
     , deepseq                 ^>=1.4 || ^>=1.5
 
@@ -215,7 +215,7 @@ library safe
     Data.Type.Nat.Singleton.Safe
 
   build-depends:
-    , base                    >=4.17 && <5
+    , base                    >=4.18 && <5
     , data-debruijn:fast
     , data-debruijn:typenats
     , deepseq                 ^>=1.4 || ^>=1.5
@@ -249,7 +249,7 @@ library samples
   hs-source-dirs: doc/samples
   other-modules:  STLC
   build-depends:
-    , base           >=4.17 && <5
+    , base           >=4.18 && <5
     , data-debruijn
 
 test-suite data-debruijn-tests
@@ -280,7 +280,7 @@ benchmark bench-time
     Bench.Time.Data.DeBruijn.Thinning
 
   build-depends:
-    , base                         >=4.17 && <5
+    , base                         >=4.18 && <5
     , criterion                    ^>=1.6
     , data-debruijn
     , data-debruijn:bench-samples
@@ -296,7 +296,7 @@ benchmark bench-space
     Bench.Space.Data.DeBruijn.Thinning
 
   build-depends:
-    , base                         >=4.17    && <5
+    , base                         >=4.18    && <5
     , bytestring
     , cassava                      ^>=0.5
     , data-debruijn
@@ -310,4 +310,4 @@ library bench-samples
   visibility:      private
   hs-source-dirs:  bench-samples
   exposed-modules: Bench.Samples.Data.DeBruijn.Thinning
-  build-depends:   base >=4.17 && <5
+  build-depends:   base >=4.18 && <5
