@@ -108,7 +108,7 @@ library typenats
   visibility:      public
   hs-source-dirs:  src-typenats
   exposed-modules: Data.Type.Nat
-  build-depends:   base >=4.17 && <5
+  build-depends:   base >=4.18 && <5
 
 library fast
   import:          language
@@ -121,7 +121,7 @@ library fast
     Data.Type.Nat.Singleton.Fast
 
   build-depends:
-    , base                    >=4.17 && <5
+    , base                    >=4.18 && <5
     , data-debruijn:typenats
     , deepseq                 ^>=1.4 || ^>=1.5
 
@@ -162,7 +162,7 @@ library safe
     Data.Type.Nat.Singleton.Safe
 
   build-depends:
-    , base                    >=4.17 && <5
+    , base                    >=4.18 && <5
     , data-debruijn:fast
     , data-debruijn:typenats
     , deepseq                 ^>=1.4 || ^>=1.5
